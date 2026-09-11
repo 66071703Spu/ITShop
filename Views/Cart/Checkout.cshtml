@@ -1,0 +1,289 @@
+@using System.Linq
+@model IEnumerable<ITShop.ViewModels.CartViewModel>
+@{
+    Layout = "_UserLayout";
+    var items = Model?.ToList() ?? new List<ITShop.ViewModels.CartViewModel>();
+    var availableAddresses = ViewBag.AvailableAddresses as List<ITShop.ViewModels.CheckoutAddressOptionViewModel> ?? new
+List<ITShop.ViewModels.CheckoutAddressOptionViewModel>();
+    var shippingProviders = ViewBag.ShippingProviders as List<ITShop.ViewModels.ShippingProviderOptionViewModel> ?? new
+List<ITShop.ViewModels.ShippingProviderOptionViewModel>();
+    var subtotal = items.Sum(x => x.OriginalSubTotal);
+    var totalDiscount = items.Sum(x => x.DiscountAmount * x.Quantity);
+    decimal shippingFee = ViewBag.ShippingFee != null ? (decimal)ViewBag.ShippingFee : 60m;
+    string? appliedCouponCode = ViewBag.AppliedCouponCode as string;
+    string? appliedCouponPromotionName = ViewBag.AppliedCouponPromotionName as string;
+    decimal couponDiscount = ViewBag.AppliedCouponDiscountAmount != null ? (decimal)ViewBag.AppliedCouponDiscountAmount :
+0m;
+    var availableCoupons = ViewBag.AvailableCoupons as List<ITShop.ViewModels.CouponDisplayViewModel> ?? new
+List<ITShop.ViewModels.CouponDisplayViewModel>();
+    var finalTotal = subtotal - totalDiscount - couponDiscount + shippingFee;
+    var isBuyNow = ViewBag.IsBuyNow != null && (bool)ViewBag.IsBuyNow;
+    int? selectedAddressId = ViewBag.SelectedAddressId != null ? (int)ViewBag.SelectedAddressId : null;
+    string selectedShippingProvider = ViewBag.SelectedShippingProvider as string ??
+shippingProviders.FirstOrDefault()?.Value ?? "Thailand Post";
+}
+
+<div class="container py-3">
+    <div class="user-page-header">
+        <h2 class="user-page-title">Checkout</h2>
+    </div>
+
+    @if (TempData["CartSuccess"] != null)
+    {
+        <div class="alert alert-success">@TempData["CartSuccess"]</div>
+    }
+
+    @if (TempData["CartError"] != null)
+    {
+        <div class="alert alert-danger">@TempData["CartError"]</div>
+    }
+
+    @if (isBuyNow)
+    {
+        <div class="alert alert-info">กำลังชำระเงินแบบ Buy Now สำหรับสินค้าที่เลือกครั้งนี้เท่านั้น</div>
+    }
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <form id="placeOrderForm" asp-action="PlaceOrder" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="buyNow" value="@isBuyNow.ToString().ToLower()" />
+
+                <div class="card border-0 mb-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3 gap-3">
+                            <h5 class="mb-0">Shipping Address</h5>
+                            <a asp-controller="Account" asp-action="ManageAddresses"
+                               class="btn btn-sm btn-outline-secondary">Manage Addresses</a>
+                        </div>
+
+                        @if (availableAddresses.Any())
+                        {
+                            <div class="d-grid gap-3">
+                                @foreach (var address in availableAddresses)
+                                {
+                                    <label class="user-choice-card d-flex gap-3 align-items-start">
+                                        <input type="radio" class="form-check-input mt-1" name="addressId"
+                                               value="@address.AddressId" @(selectedAddressId == address.AddressId ? "checked" :
+                                                                                                                                                                                                                                                                        null) />
+                                        <span>
+                                            <span class="fw-semibold d-block">
+                                                @address.AddressLine
+                                                @if (address.IsDefault)
+                                                {
+                                                    <span class="badge bg-primary-subtle text-primary ms-2">Default</span>
+                                                }
+                                            </span>
+                                        </span>
+                                    </label>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-warning mb-0">
+                                ยังไม่มีที่อยู่จัดส่ง กรุณาเพิ่มที่อยู่ก่อนยืนยันคำสั่งซื้อ
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="card border-0 mb-3">
+                    <div class="card-body">
+                        <h5 class="mb-3">Shipping Provider</h5>
+
+                        <div class="d-grid gap-3">
+                            @foreach (var provider in shippingProviders)
+                            {
+                                <label class="user-choice-card d-flex gap-3 align-items-start">
+                                    <input type="radio" class="form-check-input mt-1" name="shippingProvider"
+                                           value="@provider.Value" @(string.Equals(selectedShippingProvider, provider.Value,
+                                                                                                                                                                                                                                                  StringComparison.OrdinalIgnoreCase) ? "checked" : null) />
+                                    <span>
+                                        <span class="fw-semibold d-block">@provider.Label</span>
+                                        <span class="small text-muted">@provider.Description</span>
+                                    </span>
+                                </label>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 mb-3">
+                    <div class="card-body">
+                        <h5>Payment Method</h5>
+
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="paymentMethod" id="cod"
+                                   value="Cash on Delivery" checked>
+                            <label class="form-check-label" for="cod">Cash on Delivery</label>
+                        </div>
+
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="radio" name="paymentMethod" id="bank"
+                                   value="Bank Transfer">
+                            <label class="form-check-label" for="bank">Bank Transfer</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0">
+                    <div class="card-body">
+                        <h5>Items</h5>
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Qty</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in items)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div>@item.ProductName</div>
+                                                @if (!string.IsNullOrWhiteSpace(item.BrandName))
+                                                {
+                                                    <div class="small text-muted">Brand: @item.BrandName</div>
+                                                }
+                                                @if (item.HasAutoAppliedPromotion &&
+                                                                                                                                            !string.IsNullOrWhiteSpace(item.ActivePromotionName))
+                                                {
+                                                    <div class="small text-success">Auto Apply: @item.ActivePromotionName</div>
+                                                }
+                                            </td>
+                                            <td>@item.Quantity</td>
+                                            <td>
+                                                <div>@item.SubTotal.ToString("N2") บาท</div>
+                                                @if (item.HasAutoAppliedPromotion)
+                                                {
+                                                    <div class="small text-muted text-decoration-line-through">
+                                                        @((item.OriginalPrice * item.Quantity).ToString("N2")) บาท</div>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card border-0 sticky-lg-top" style="top: 1rem;">
+                    <div class="card-body">
+                        <h5>Summary</h5>
+
+                        <form asp-action="ApplyCoupon" method="post" class="mb-3">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="buyNow" value="@isBuyNow.ToString().ToLower()" />
+                            <input type="hidden" name="returnToCheckout" value="true" />
+                            <div class="input-group">
+                                <input type="text" name="couponCode" class="form-control text-uppercase"
+                                       placeholder="Coupon code" value="@(appliedCouponCode ?? string.Empty)" />
+                                <button type="submit" class="btn btn-outline-primary">Apply</button>
+                            </div>
+                        </form>
+
+                        @if (availableCoupons.Any())
+                        {
+                            <div class="mb-3">
+                                <div class="small fw-semibold mb-2">Coupons for this checkout</div>
+                                <div class="d-grid gap-2">
+                                    @foreach (var coupon in availableCoupons.Take(3))
+                                    {
+                                        <div class="user-soft-panel">
+                                            <div class="d-flex justify-content-between gap-2 align-items-start">
+                                                <div>
+                                                    <div class="fw-semibold">@coupon.Code</div>
+                                                    <div class="small text-muted">@coupon.PromotionName</div>
+                                                </div>
+                                                <span class="badge text-bg-success">@coupon.DiscountLabel</span>
+                                            </div>
+                                            <div class="small text-muted mt-2">@coupon.ApplicableProductSummary</div>
+                                            @if (coupon.MinimumOrderSubtotal.HasValue)
+                                            {
+                                                <div class="small text-muted">ขั้นต่ำ @coupon.MinimumOrderSubtotal.Value.ToString("N2")
+                                                    บาท</div>
+                                                }
+                                                <div class="small @(coupon.IsCurrentlyEligible ? "text-success" : "text-warning") mt-1">
+                                                    @coupon.EligibilityMessage</div>
+                                                    @if (coupon.IsCurrentlyEligible)
+                                                    {
+                                                        <form asp-action="ApplyCoupon" method="post" class="mt-2">
+                                                            @Html.AntiForgeryToken()
+                                                            <input type="hidden" name="buyNow" value="@isBuyNow.ToString().ToLower()" />
+                                                            <input type="hidden" name="returnToCheckout" value="true" />
+                                                            <input type="hidden" name="couponCode" value="@coupon.Code" />
+                                                            <button type="submit" class="btn btn-sm btn-outline-primary">Use This
+                                                                Coupon</button>
+                                                            </form>
+                                                        }
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+
+                                    @if (!string.IsNullOrWhiteSpace(appliedCouponCode))
+                                    {
+                                        <div class="user-soft-panel bg-success-subtle mb-3">
+                                            <div class="fw-semibold">Coupon: @appliedCouponCode</div>
+                                            <div class="small text-muted">@appliedCouponPromotionName</div>
+                                            <div class="small text-success">Discount -@couponDiscount.ToString("N2") บาท</div>
+                                            <form asp-action="RemoveCoupon" method="post" class="mt-2">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="buyNow" value="@isBuyNow.ToString().ToLower()" />
+                                                <input type="hidden" name="returnToCheckout" value="true" />
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">Remove Coupon</button>
+                                            </form>
+                                        </div>
+                                    }
+
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Subtotal</span>
+                                        <span>@subtotal.ToString("N2") บาท</span>
+                                    </div>
+                                    @if (totalDiscount > 0)
+                                    {
+                                        <div class="d-flex justify-content-between mb-2 text-success">
+                                            <span>Auto Apply Discount</span>
+                                            <span>-@totalDiscount.ToString("N2") บาท</span>
+                                        </div>
+                                    }
+                                    @if (couponDiscount > 0)
+                                    {
+                                        <div class="d-flex justify-content-between mb-2 text-success">
+                                            <span>Coupon Discount</span>
+                                            <span>-@couponDiscount.ToString("N2") บาท</span>
+                                        </div>
+                                    }
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Shipping</span>
+                                        <span>@shippingFee.ToString("N2") บาท</span>
+                                    </div>
+                                    <hr />
+                                    <div class="d-flex justify-content-between fw-bold mb-3">
+                                        <span>Final Total</span>
+                                        <span>@finalTotal.ToString("N2") บาท</span>
+                                    </div>
+
+                                    @if (availableAddresses.Any())
+                                    {
+                                        <button type="submit" form="placeOrderForm" class="btn btn-success w-100">Confirm Order</button>
+                                    }
+                                    else
+                                    {
+                                        <button type="submit" form="placeOrderForm" class="btn btn-success w-100" disabled>Confirm
+                                            Order</button>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>

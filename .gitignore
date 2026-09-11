@@ -1,0 +1,17 @@
+## Build output
+bin/
+obj/
+
+## Local configuration and secrets
+appsettings.json
+appsettings.*.local.json
+
+## User-uploaded files
+wwwroot/uploads/
+
+## IDE and OS files
+.vs/
+.vscode/
+*.user
+*.suo
+.DS_Store

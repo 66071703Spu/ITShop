@@ -1,0 +1,85 @@
+@model ITShop.ViewModels.BackOfficeProfileViewModel
+@{
+    Layout = "_SuperAdminLayout";
+}
+
+<div class="container-fluid py-2">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Staff Profile</h2>
+        </div>
+        <a asp-action="AdminList" class="btn btn-outline-secondary">Back to Admin Accounts</a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-xl-3">
+            <div class="card shadow-sm border-0">
+                <div class="card-body text-center p-4">
+                    <div class="rounded-circle bg-danger-subtle text-danger d-inline-flex align-items-center justify-content-center fw-bold mb-3"
+                         style="width: 88px; height: 88px; font-size: 1.75rem;">
+                        @Model.AvatarInitials
+                    </div>
+                    <h3 class="h5 mb-1">@Model.Profile.FirstName @Model.Profile.LastName</h3>
+                    <p class="text-muted small mb-2">@Model.Profile.Email</p>
+                    @foreach (var role in Model.Profile.Roles)
+                    {
+                        var badgeClass = role.ToLower() == "superadmin" ? "bg-danger-subtle text-danger" :
+     "bg-primary-subtle text-primary";
+                        <span class="badge @badgeClass me-1">@role</span>
+                    }
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 mt-3">
+                <div class="card-body">
+                    <div class="small text-muted mb-2">Phone</div>
+                    <div class="fw-semibold mb-3">@(string.IsNullOrWhiteSpace(Model.Profile.PhoneNumber) ? "-" :
+                                                                                                Model.Profile.PhoneNumber)</div>
+                        <div class="small text-muted mb-2">Status</div>
+                        <div class="fw-semibold">@(string.IsNullOrWhiteSpace(Model.Profile.Status) ? "active" :
+                                                                                                            Model.Profile.Status)</div>
+                            <div class="small text-muted mt-3 mb-2">Member Since</div>
+                            <div class="fw-semibold">@Model.Profile.CreatedAt?.ToString("dd MMM yyyy")</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-9">
+                    <div class="card shadow-sm border-0 mb-4">
+                        <div class="card-body p-4">
+                            <div class="d-flex flex-column flex-lg-row justify-content-between gap-3">
+                                <div>
+                                    <div class="small text-muted mb-2">Default Address</div>
+                                    <div class="fw-semibold">@Model.DefaultAddressPreview</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm border-0 mb-4">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h3 class="h4 mb-0">Access Permissions</h3>
+                            </div>
+
+                            @if (!Model.Permissions.Any())
+                            {
+                                <div class="alert alert-light border mb-0">ยังไม่มีสิทธิ์หลังบ้านที่ผูกกับบัญชีนี้</div>
+                            }
+                            else
+                            {
+                                <div class="row g-2">
+                                    @foreach (var permission in Model.Permissions)
+                                    {
+                                        <div class="col-md-6">
+                                            <div class="border rounded-3 px-3 py-2 bg-light-subtle fw-semibold">@permission</div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>

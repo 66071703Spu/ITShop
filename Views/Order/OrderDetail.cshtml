@@ -1,0 +1,191 @@
+@model ITShop.ViewModels.OrderViewModel
+@{
+    Layout = "_UserLayout";
+}
+
+<div class="container py-3">
+    <div class="user-page-header">
+        <h2 class="user-page-title">Order Detail</h2>
+        <a asp-action="MyOrders" class="btn btn-outline-secondary">Back to My Orders</a>
+    </div>
+
+    @if (TempData["OrderSuccess"] != null)
+    {
+        <div class="alert alert-success">@TempData["OrderSuccess"]</div>
+    }
+
+    @if (TempData["OrderError"] != null)
+    {
+        <div class="alert alert-danger">@TempData["OrderError"]</div>
+    }
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 mb-3">
+                <div class="card-body">
+                    <div class="user-kicker">Order</div>
+                    <h5 class="mb-3">Order Information</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="user-soft-panel h-100">
+                                <div class="small text-muted mb-1">Order Number</div>
+                                <div class="fw-semibold">@Model.OrderNumber</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="user-soft-panel h-100">
+                                <div class="small text-muted mb-1">Status</div>
+                                <div class="fw-semibold">@Model.Status</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="user-soft-panel h-100">
+                                <div class="small text-muted mb-1">Payment</div>
+                                <div class="fw-semibold">@Model.PaymentMethod (@Model.PaymentStatus)</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="user-soft-panel h-100">
+                                <div class="small text-muted mb-1">Date</div>
+                                <div class="fw-semibold">@Model.CreatedAt?.ToString("dd/MM/yyyy HH:mm")</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 mb-3">
+                <div class="card-body">
+                    <h5>Shipping Information</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="user-soft-panel h-100">
+                                <div class="small text-muted mb-1">Provider</div>
+                                <div class="fw-semibold">@Model.ShippingProvider</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="user-soft-panel h-100">
+                                <div class="small text-muted mb-1">Status</div>
+                                <div class="fw-semibold">@Model.ShippingStatus</div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="user-soft-panel">
+                                <div class="small text-muted mb-1">Tracking</div>
+                                <div class="fw-semibold">@(string.IsNullOrWhiteSpace(Model.TrackingNumber) ? "-" :
+                                                                        Model.TrackingNumber)</div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="user-soft-panel">
+                                    <div class="small text-muted mb-1">Address</div>
+                                    <div class="fw-semibold">@Model.ShippingAddress</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0">
+                    <div class="card-body">
+                        <h5>Items</h5>
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Qty</th>
+                                        <th>Unit Price</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.Items)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center gap-3">
+                                                    <img src="@(item.ImageUrl ?? "https://placehold.co/80x80")" width="80"
+                                                         height="80" class="user-media-thumb" style="object-fit:cover;" />
+                                                    <div>
+                                                        <div>@item.ProductName</div>
+                                                        @if (!string.IsNullOrWhiteSpace(item.BrandName))
+                                                        {
+                                                            <div class="small text-muted">Brand: @item.BrandName</div>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>@item.Quantity</td>
+                                            <td>@item.UnitPrice.ToString("N2") บาท</td>
+                                            <td>@item.TotalPrice.ToString("N2") บาท</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card border-0 mb-3 sticky-lg-top" style="top: 1rem;">
+                    <div class="card-body">
+                        <h5>Summary</h5>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Subtotal</span>
+                            <span>@Model.TotalAmount.ToString("N2") บาท</span>
+                        </div>
+                        @if (Model.DiscountAmount > 0)
+                        {
+                            <div class="d-flex justify-content-between mb-2 text-success">
+                                <span>Discount</span>
+                                <span>-@Model.DiscountAmount.ToString("N2") บาท</span>
+                            </div>
+                        }
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Shipping</span>
+                            <span>@Model.ShippingFee.ToString("N2") บาท</span>
+                        </div>
+                        <hr />
+                        <div class="d-flex justify-content-between fw-bold">
+                            <span>Final Total</span>
+                            <span>@Model.FinalAmount.ToString("N2") บาท</span>
+                        </div>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(Model.CancelReason))
+                {
+                    <div class="card border-danger-subtle mb-3">
+                        <div class="card-body">
+                            <h5 class="text-danger">Cancel Reason</h5>
+                            <p class="mb-0">@Model.CancelReason</p>
+                        </div>
+                    </div>
+                }
+
+                @if (Model.CanCancel)
+                {
+                    <div class="card border-0">
+                        <div class="card-body">
+                            <h5>Cancel Order</h5>
+                            <p class="text-muted small">สามารถยกเลิกได้ก่อนสถานะ Packed</p>
+
+                            <form asp-action="CancelOrder" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@Model.OrderId" />
+                                <div class="mb-3">
+                                    <textarea name="cancelReason" rows="3" class="form-control"
+                                              placeholder="Reason for cancel"></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-danger w-100"
+                                        onclick="return confirm('Confirm cancel this order?')">Cancel Order</button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>

@@ -1,0 +1,107 @@
+@model IEnumerable<ITShop.ViewModels.PromotionViewModel>
+@{
+    Layout = "_AdminLayout";
+    var promotions = Model?.ToList() ?? new List<ITShop.ViewModels.PromotionViewModel>();
+}
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-body">
+            <div class="admin-page-header">
+                <h2 class="admin-page-title">Manage Promotions</h2>
+                <a asp-action="AddPromotion" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Add Promotion
+                </a>
+            </div>
+
+            @if (!promotions.Any())
+            {
+                <div class="alert alert-info mb-0">ยังไม่มี Promotion ในระบบ</div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Discount</th>
+                                <th>Coupon</th>
+                                <th>Products</th>
+                                <th>Period</th>
+                                <th>Schedule</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in promotions)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="fw-semibold">@item.Name</div>
+                                    </td>
+                                    <td><span class="badge bg-secondary">@item.PromotionTypeLabel</span></td>
+                                    <td>
+                                        @if ((item.DiscountType ?? string.Empty).Equals("percent",
+                                                                        StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <span>@((item.DiscountValue ?? 0).ToString("0.##"))%</span>
+                                        }
+                                        else
+                                        {
+                                            <span>@((item.DiscountValue ?? 0).ToString("0.##")) บาท</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrWhiteSpace(item.CouponCode))
+                                        {
+                                            <div class="fw-semibold">@item.CouponCode</div>
+                                            <div class="small text-muted">Used: @item.CouponRedemptionCount time(s)</div>
+                                            <div class="small text-muted">Limit: @(item.CouponUsageLimit?.ToString() ?? "Unlimited")
+                                            </div>
+                                            <div class="small text-muted">ขั้นต่ำ: @(item.MinimumOrderSubtotal?.ToString("0.##") ??
+                                                                                    "ไม่กำหนด") บาท</div>
+                                            }
+                                        else
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div class="fw-semibold">@item.AssignedProductCount ชิ้น</div>
+                                            <div class="small text-muted">@item.AssignedProductSummary</div>
+                                        </td>
+                                        <td>
+                                            <div class="small">Start: @(item.StartDate?.ToString("dd/MM/yyyy HH:mm") ?? "-")</div>
+                                            <div class="small">End: @(item.EndDate?.ToString("dd/MM/yyyy HH:mm") ?? "-")</div>
+                                        </td>
+                                        <td>
+                                            @if (item.IsActiveNow)
+                                            {
+                                                <span class="badge bg-success">In Schedule</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">Out of Schedule</span>
+                                            }
+                                        </td>
+                                        <td class="text-end">
+                                            <a asp-action="EditPromotion" asp-route-id="@item.PromotionId"
+                                               class="btn btn-sm btn-warning">Edit</a>
+                                            <form asp-action="DeletePromotion" method="post" class="d-inline"
+                                                  data-confirm-message="ลบ Promotion นี้ใช่ไหม?">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@item.PromotionId" />
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>

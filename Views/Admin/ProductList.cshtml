@@ -1,0 +1,82 @@
+@model IEnumerable<ITShop.ViewModels.ProductViewModel>
+@{
+    Layout = "_AdminLayout";
+}
+
+<div class="container-fluid">
+    <div class="admin-page-header">
+        <h2 class="admin-page-title">Product List</h2>
+        <a asp-action="AddProduct" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Add Product</a>
+    </div>
+
+    @if (TempData["ProductSuccess"] != null)
+    {
+        <div class="alert alert-success">@TempData["ProductSuccess"]</div>
+    }
+
+    @if (TempData["ProductError"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ProductError"]</div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">ยังไม่มีสินค้าในระบบ</div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Image</th>
+                                <th>Name</th>
+                                <th>Brand</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Stock</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <img src="@(item.ImageUrl ?? "https://placehold.co/80x80")" width="80" height="80"
+                                             class="admin-media-thumb" style="object-fit:cover;" />
+                                    </td>
+                                    <td class="fw-semibold">@item.Name</td>
+                                    <td>@(item.BrandName ?? "-")</td>
+                                    <td>@(item.CategoryName ?? "-")</td>
+                                    <td>@item.Price.ToString("N2") บาท</td>
+                                    <td>@(item.Stock ?? 0)</td>
+                                    <td>
+                                        <span class="badge @((item.IsActive) ? "bg-success" : "bg-secondary")">
+                                            @(item.IsActive ? "active" : "inactive")
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            <a asp-action="EditProduct" asp-route-id="@item.ProductId"
+                                               class="btn btn-sm btn-warning">Edit</a>
+                                            <form asp-action="DeleteProduct" method="post" class="d-inline"
+                                                  data-confirm-message="ลบสินค้านี้ถาวรใช่ไหม?">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@item.ProductId" />
+                                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+</div>

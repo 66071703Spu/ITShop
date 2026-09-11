@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ITShop</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+            :root {
+                --shop-accent: #ff7f50;
+                --shop-accent-deep: #ea6a3b;
+                --shop-accent-soft: #fff0ea;
+                --shop-surface: #ffffff;
+                --shop-surface-soft: #f8f7f3;
+                --shop-border: #e8e4dc;
+                --shop-text: #202430;
+                --shop-muted: #6e7587;
+                --shop-shadow: 0 18px 44px rgba(32, 36, 48, 0.08);
+                --shop-shadow-soft: 0 10px 24px rgba(32, 36, 48, 0.06);
+            }
+
+            body {
+                background:
+                    radial-gradient(circle at top left, rgba(255, 127, 80, 0.12), transparent 22%),
+                    radial-gradient(circle at top right, rgba(82, 163, 255, 0.10), transparent 18%),
+                    linear-gradient(180deg, #fffaf7 0%, #f7f8fb 100%);
+                color: var(--shop-text);
+            }
+
+            .user-shell {
+                max-width: 1360px;
+                margin: 0 auto;
+                padding-inline: 20px;
+            }
+
+            .user-navbar {
+                position: sticky;
+                top: 0;
+                z-index: 1030;
+                padding: 14px 0;
+                background: rgba(255, 250, 247, 0.82);
+                backdrop-filter: blur(14px);
+                border-bottom: 1px solid rgba(232, 228, 220, 0.85);
+            }
+
+            .user-navbar-panel {
+                background: linear-gradient(135deg, var(--shop-accent) 0%, #ff996d 100%);
+                border-radius: 24px;
+                padding: 14px 18px;
+                box-shadow: var(--shop-shadow);
+            }
+
+            .user-brand {
+                color: #fff !important;
+                font-weight: 800;
+                font-size: 1.4rem;
+                letter-spacing: 0.02em;
+            }
+
+            .user-category-trigger,
+            .user-icon-link {
+                color: #fff;
+            }
+
+            .user-category-trigger {
+                border: 1px solid rgba(255, 255, 255, 0.28);
+                border-radius: 999px;
+                padding: 10px 14px;
+                background: rgba(255, 255, 255, 0.10);
+            }
+
+            .user-search-form {
+                flex: 1 1 auto;
+            }
+
+            .user-search-input {
+                min-height: 48px;
+                border-radius: 999px;
+                border: 0;
+                padding-inline: 1.25rem;
+                box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+            }
+
+            .user-search-input:focus {
+                box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.28);
+            }
+
+            .user-search-button {
+                border-radius: 999px;
+                padding-inline: 1.1rem;
+                font-weight: 700;
+                background: #fff;
+                color: var(--shop-accent-deep);
+            }
+
+            .user-icon-link {
+                width: 44px;
+                height: 44px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 999px;
+                background: rgba(255, 255, 255, 0.12);
+                text-decoration: none;
+                transition: 0.18s ease;
+            }
+
+            .user-icon-link:hover,
+            .user-category-trigger:hover {
+                color: #fff;
+                background: rgba(255, 255, 255, 0.20);
+            }
+
+            .user-main {
+                padding-top: 26px;
+                padding-bottom: 40px;
+            }
+
+            .user-page-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 1rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .user-page-title {
+                margin: 0;
+                font-weight: 800;
+                letter-spacing: -0.02em;
+            }
+
+            .user-card,
+            .card {
+                border-radius: 24px;
+                border-color: var(--shop-border) !important;
+                box-shadow: var(--shop-shadow-soft) !important;
+            }
+
+            .card .card-body {
+                padding: 1.5rem;
+            }
+
+            .btn {
+                border-radius: 14px;
+                font-weight: 700;
+            }
+
+            .btn-primary,
+            .btn-warning,
+            .btn-success {
+                border-color: transparent;
+            }
+
+            .btn-primary,
+            .btn-warning {
+                background: var(--shop-accent);
+                color: #fff;
+            }
+
+            .btn-primary:hover,
+            .btn-warning:hover {
+                background: var(--shop-accent-deep);
+                color: #fff;
+            }
+
+            .form-control,
+            .form-select {
+                min-height: 48px;
+                border-radius: 16px;
+                border-color: var(--shop-border);
+            }
+
+            textarea.form-control {
+                min-height: 120px;
+            }
+
+            .badge {
+                border-radius: 999px;
+                padding: 0.5em 0.75em;
+            }
+
+            .table-responsive {
+                border-radius: 20px;
+            }
+
+            .table thead th {
+                color: var(--shop-muted);
+                font-size: 0.82rem;
+                text-transform: uppercase;
+                letter-spacing: 0.03em;
+                font-weight: 700;
+            }
+
+            .user-soft-panel {
+                border: 1px solid var(--shop-border);
+                border-radius: 20px;
+                background: rgba(255, 255, 255, 0.76);
+                padding: 1rem;
+            }
+
+            .user-section-card {
+                border: 1px solid var(--shop-border);
+                border-radius: 22px;
+                background: var(--shop-surface-soft);
+                padding: 1.25rem;
+                height: 100%;
+            }
+
+            .user-section-title {
+                font-size: 0.95rem;
+                font-weight: 800;
+                margin-bottom: 1rem;
+            }
+
+            .user-kicker {
+                color: var(--shop-muted);
+                font-size: 0.75rem;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                font-weight: 700;
+                margin-bottom: 0.35rem;
+            }
+
+            .user-compact-note {
+                color: var(--shop-muted);
+                font-size: 0.88rem;
+            }
+
+            .user-media-thumb {
+                border-radius: 18px;
+                border: 1px solid var(--shop-border);
+                background: var(--shop-surface-soft);
+            }
+
+            .user-choice-card {
+                display: flex;
+                align-items: flex-start;
+                gap: 0.8rem;
+                border: 1px solid var(--shop-border);
+                border-radius: 18px;
+                background: rgba(255, 255, 255, 0.82);
+                padding: 1rem;
+                margin: 0;
+                height: 100%;
+            }
+
+            .user-choice-card .form-check-input {
+                margin-top: 0.2rem;
+                flex: 0 0 auto;
+            }
+
+            .user-choice-body {
+                flex: 1 1 auto;
+                min-width: 0;
+            }
+
+            .user-product-card {
+                overflow: hidden;
+                transition: transform 0.18s ease, box-shadow 0.18s ease;
+            }
+
+            .user-product-card:hover {
+                transform: translateY(-4px);
+                box-shadow: var(--shop-shadow) !important;
+            }
+
+            .user-footer {
+                border-top: 1px solid var(--shop-border);
+                padding: 22px 0 34px;
+                color: var(--shop-muted);
+            }
+
+            @@media (max-width: 991.98px) {
+                .user-navbar-panel {
+                    border-radius: 20px;
+                }
+
+                .user-page-header {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+
+                .user-shell {
+                    padding-inline: 14px;
+                }
+            }
+    </style>
+</head>
+
+<body>
+    <header class="user-navbar">
+        <div class="user-shell">
+            <nav class="navbar navbar-expand-lg user-navbar-panel">
+                <div class="container-fluid px-0 gap-3">
+                    <a class="navbar-brand user-brand me-0" asp-controller="Home" asp-action="Index">ITShop</a>
+
+                    <div class="dropdown">
+                        <a class="user-category-trigger dropdown-toggle text-decoration-none" href="#"
+                               data-bs-toggle="dropdown">
+                            Category
+                        </a>
+                        <ul class="dropdown-menu shadow border-0 rounded-4 mt-2">
+                            <li><a class="dropdown-item" asp-controller="Product" asp-action="Index"
+                                       asp-route-category="CPU">CPU</a></li>
+                                <li><a class="dropdown-item" asp-controller="Product" asp-action="Index"
+                                           asp-route-category="Graphics Card">Graphics Card</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Product" asp-action="Index"
+                                               asp-route-category="Mainboard">Mainboard</a></li>
+                                        <li><a class="dropdown-item" asp-controller="Product" asp-action="Index"
+                                                   asp-route-category="RAM">RAM</a></li>
+                                            <li><a class="dropdown-item" asp-controller="Product" asp-action="Index"
+                                                       asp-route-category="Storage">Storage</a></li>
+                                                <li><a class="dropdown-item" asp-controller="Product" asp-action="Index"
+                                                           asp-route-category="Power Supply">Power Supply</a></li>
+                                                    <li><a class="dropdown-item" asp-controller="Product" asp-action="Index"
+                                                               asp-route-category="Cooling">Cooling</a></li>
+                                                        <li><a class="dropdown-item" asp-controller="Product" asp-action="Index"
+                                                                   asp-route-category="Case">Case</a></li>
+                                                            <li><a class="dropdown-item" asp-controller="Product" asp-action="Index"
+                                                                       asp-route-category="Monitor">Monitor</a></li>
+                                                                <li><a class="dropdown-item" asp-controller="Product" asp-action="Index"
+                                                                           asp-route-category="Laptop">Laptop</a></li>
+                                                                    <li><a class="dropdown-item" asp-controller="Product" asp-action="Index"
+                                                                               asp-route-category="Mouse">Mouse</a></li>
+                                                                        <li><a class="dropdown-item" asp-controller="Product" asp-action="Index"
+                                                                                   asp-route-category="Keyboard">Keyboard</a></li>
+                                                                            <li><a class="dropdown-item" asp-controller="Product" asp-action="Index"
+                                                                                       asp-route-category="Headset">Headset</a></li>
+                                                                                <li><a class="dropdown-item" asp-controller="Product" asp-action="Index"
+                                                                                           asp-route-category="Gaming Gear">Gaming Gear</a></li>
+                                                                                    <li><a class="dropdown-item" asp-controller="Product" asp-action="Index"
+                                                                                               asp-route-category="Comset">Comset</a></li>
+                                                                                    </ul>
+                                                                                </div>
+
+                                                                                <form asp-controller="Product" asp-action="Index" method="get"
+                                                                                      class="d-flex user-search-form gap-2 align-items-center">
+                                                                                    <input name="search" class="form-control user-search-input"
+                                                                                           placeholder="ค้นหาสินค้า / แบรนด์" />
+                                                                                    <button type="submit" class="btn user-search-button">Search</button>
+                                                                                </form>
+
+                                                                                <div class="d-flex align-items-center gap-2">
+                                                                                    <a class="user-icon-link fs-5" asp-controller="Account" asp-action="Profile" title="Profile">
+                                                                                        <i class="bi bi-person"></i>
+                                                                                    </a>
+
+                                                                                    <a class="user-icon-link fs-5" asp-controller="Cart" asp-action="Cart" title="Cart">
+                                                                                        <i class="bi bi-cart"></i>
+                                                                                    </a>
+                                                                                </div>
+                                                                            </div>
+                                                                        </nav>
+                                                                    </div>
+                                                                </header>
+
+                                                                <div class="user-shell user-main">
+                                                                    <main role="main">
+                                                                        @RenderBody()
+                                                                    </main>
+                                                                </div>
+
+                                                                <footer class="user-footer">
+                                                                    <div class="user-shell d-flex flex-column flex-lg-row justify-content-between gap-2 align-items-lg-center">
+                                                                        <div>&copy; 2569 - ITShop</div>
+                                                                        <a asp-area="" asp-controller="Home" asp-action="Privacy" class="text-decoration-none">Privacy</a>
+                                                                    </div>
+                                                                </footer>
+                                                                <script src="~/lib/jquery/dist/jquery.min.js"></script>
+                                                                <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+                                                                <script src="~/js/site.js" asp-append-version="true"></script>
+                                                                @await RenderSectionAsync("Scripts", required: false)
+                                                            </body>
+
+                                                        </html>

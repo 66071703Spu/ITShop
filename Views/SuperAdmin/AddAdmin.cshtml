@@ -1,0 +1,82 @@
+@model ITShop.ViewModels.AdminUserFormViewModel
+@{
+    Layout = "_SuperAdminLayout";
+}
+
+<div class="container-fluid admin-form-shell">
+    <div class="admin-form-header">
+        <div class="admin-form-title-wrap">
+            <div class="admin-icon-badge bg-primary-subtle text-primary">
+                <i class="bi bi-person-plus"></i>
+            </div>
+            <div>
+                <div class="admin-form-kicker">SuperAdmin</div>
+                <h2 class="admin-form-title">Add Admin Account</h2>
+            </div>
+        </div>
+        <a asp-action="AdminList" class="btn btn-outline-secondary">Back to Admin Accounts</a>
+    </div>
+
+    <div class="card border-0" style="max-width: 760px; margin: 0 auto;">
+        <div class="card-body">
+
+            @if (ViewBag.Error != null)
+            {
+                <div class="alert alert-danger">@ViewBag.Error</div>
+            }
+
+            <form asp-action="AddAdmin" method="post">
+                @Html.AntiForgeryToken()
+                <div class="row g-4">
+                    <div class="col-12">
+                        <div class="admin-section-card">
+                            <div class="admin-section-title">Profile Information</div>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">First Name</label>
+                                    <input asp-for="FirstName" class="form-control" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Last Name</label>
+                                    <input asp-for="LastName" class="form-control" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Email</label>
+                                    <input asp-for="Email" class="form-control" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Password</label>
+                                    <input asp-for="Password" type="password" class="form-control" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Phone</label>
+                                    <input asp-for="PhoneNumber" class="form-control" />
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Status</label>
+                                    <select asp-for="Status" class="form-select">
+                                        <option value="active">active</option>
+                                        <option value="inactive">inactive</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Role</label>
+                                    <select asp-for="SelectedRoleId" class="form-select">
+                                        @foreach (var role in Model.RoleOptions)
+                                        {
+                                            <option value="@role.RoleId">@role.RoleName</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="admin-action-row">
+                    <button type="submit" class="btn btn-dark">Save</button>
+                    <a asp-action="AdminList" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

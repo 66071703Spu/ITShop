@@ -1,0 +1,106 @@
+@model ITShop.ViewModels.AdminShipmentUpdateViewModel
+@{
+    Layout = "_AdminLayout";
+}
+
+<div class="container-fluid admin-form-shell">
+    <div class="admin-form-header">
+        <div class="admin-form-title-wrap">
+            <div class="admin-icon-badge bg-info-subtle text-info-emphasis">
+                <i class="bi bi-truck"></i>
+            </div>
+            <div>
+                <div class="admin-form-kicker">Fulfillment</div>
+                <h2 class="admin-form-title">Update Shipment</h2>
+            </div>
+        </div>
+        <a asp-action="OrderList" class="btn btn-outline-secondary">Back to Order List</a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card h-100 border-0">
+                <div class="card-body">
+                    <div class="admin-section-title">Order Summary</div>
+                    <div class="admin-field-stack">
+                        <div class="admin-soft-panel">
+                            <div class="admin-compact-note mb-1">Order Number</div>
+                            <div class="fw-semibold">@Model.OrderNumber</div>
+                        </div>
+                        <div class="admin-soft-panel">
+                            <div class="admin-compact-note mb-1">Customer</div>
+                            <div class="fw-semibold">@Model.CustomerName</div>
+                        </div>
+                        <div class="admin-soft-panel">
+                            <div class="admin-compact-note mb-1">Shipping Address</div>
+                            <div class="fw-semibold">@Model.ShippingAddress</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card border-0">
+                <div class="card-body">
+                    <div class="admin-section-title">Shipment Information</div>
+
+                    <form asp-action="EditShipment" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="OrderId" />
+                        <input type="hidden" asp-for="ShipmentId" />
+                        <input type="hidden" asp-for="OrderNumber" />
+                        <input type="hidden" asp-for="CustomerName" />
+                        <input type="hidden" asp-for="ShippingAddress" />
+
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="admin-section-card">
+                                    <label asp-for="ShippingProvider" class="form-label">Shipping Provider</label>
+                                    <select asp-for="ShippingProvider" class="form-select">
+                                        @foreach (var provider in Model.ShippingProviderOptions)
+                                        {
+                                            <option value="@provider">@provider</option>
+                                        }
+                                    </select>
+                                    <span asp-validation-for="ShippingProvider" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="admin-section-card">
+                                    <label asp-for="ShippingStatus" class="form-label">Shipping Status</label>
+                                    <select asp-for="ShippingStatus" class="form-select">
+                                        @foreach (var status in Model.ShippingStatusOptions)
+                                        {
+                                            <option value="@status">@status</option>
+                                        }
+                                    </select>
+                                    <span asp-validation-for="ShippingStatus" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="admin-section-card">
+                                    <label asp-for="TrackingNumber" class="form-label">Tracking Number</label>
+                                    <input asp-for="TrackingNumber" class="form-control" />
+                                    <span asp-validation-for="TrackingNumber" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="admin-action-row">
+                            <button type="submit" class="btn btn-primary">Save Shipment</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

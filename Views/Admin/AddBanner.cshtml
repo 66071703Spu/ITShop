@@ -1,0 +1,67 @@
+@model ITShop.ViewModels.BannerViewModel
+@{
+    Layout = "_AdminLayout";
+}
+
+<div class="container-fluid">
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <h2 class="mb-4">Add Banner</h2>
+
+            @if (ViewBag.Error != null)
+            {
+                <div class="alert alert-danger">@ViewBag.Error</div>
+            }
+
+            <form asp-action="AddBanner" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Title</label>
+                        <input asp-for="Title" class="form-control" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Position</label>
+                        <select asp-for="Position" class="form-select">
+                            <option value="home_top">home_top</option>
+                            <option value="home_middle">home_middle</option>
+                            <option value="home_bottom">home_bottom</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Display Order</label>
+                        <input asp-for="DisplayOrder" type="number" min="1" class="form-control" />
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Start Date</label>
+                        <input asp-for="StartDate" type="datetime-local" class="form-control" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">End Date</label>
+                        <input asp-for="EndDate" type="datetime-local" class="form-control" />
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label">Upload Image</label>
+                        <input asp-for="ImageFile" type="file" accept="image/*" class="form-control" />
+                    </div>
+
+                    <div class="col-12">
+                        <div class="border rounded px-3 py-3">
+                            <div class="form-check form-switch d-flex align-items-center gap-2 mb-0">
+                                <input asp-for="IsActive" class="form-check-input mt-0" type="checkbox" role="switch" />
+                                <label asp-for="IsActive" class="form-check-label fw-semibold mb-0">Show Banner</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Save Banner</button>
+                    <a asp-action="BannerList" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

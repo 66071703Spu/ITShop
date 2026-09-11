@@ -1,0 +1,73 @@
+@model IEnumerable<ITShop.ViewModels.ProductViewModel>
+@{
+    Layout = "_AdminLayout";
+}
+
+<div class="container-fluid">
+    <div class="admin-page-header">
+        <h2 class="admin-page-title">Manage Stock</h2>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">ยังไม่มีสินค้าในระบบ</div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Product</th>
+                                <th>Current Stock</th>
+                                <th>Status</th>
+                                <th>Update Stock</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                var isLow = (item.Stock ?? 0) <= 5;
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <img src="@(item.ImageUrl ?? "https://placehold.co/80x80")" width="80" height="80"
+                                                 class="admin-media-thumb" style="object-fit:cover;" />
+                                            <div>
+                                                <div class="fw-semibold">@item.Name</div>
+                                                <div class="text-muted small">@(item.CategoryName ?? "-")</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>@(item.Stock ?? 0)</td>
+                                    <td>
+                                        @if (isLow)
+                                        {
+                                            <span class="badge bg-danger">Low Stock</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">Normal</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <form asp-action="UpdateStock" method="post"
+                                              class="d-flex flex-wrap gap-2 align-items-center">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="productId" value="@item.ProductId" />
+                                            <input type="number" name="stock" value="@(item.Stock ?? 0)" class="form-control"
+                                                   style="max-width:120px;" />
+                                            <button type="submit" class="btn btn-primary">Save</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+</div>

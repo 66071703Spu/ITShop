@@ -1,0 +1,79 @@
+@model ITShop.ViewModels.SuperAdminDashboardViewModel
+@{
+    Layout = "_SuperAdminLayout";
+}
+
+<div class="container-fluid">
+    <div class="admin-page-header">
+        <h2 class="admin-page-title">SuperAdmin Dashboard</h2>
+        <a asp-action="AdminList" class="btn btn-outline-primary">View Admin Accounts</a>
+    </div>
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card admin-stat-card h-100">
+                <div class="card-body d-flex flex-column gap-2">
+                    <div class="label">Customers</div>
+                    <div class="value">@Model.TotalCustomers</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card admin-stat-card h-100">
+                <div class="card-body d-flex flex-column gap-2">
+                    <div class="label">Admins</div>
+                    <div class="value">@Model.TotalAdmins</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card admin-stat-card h-100">
+                <div class="card-body d-flex flex-column gap-2">
+                    <div class="label">SuperAdmins</div>
+                    <div class="value">@Model.TotalSuperAdmins</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card admin-stat-card h-100">
+                <div class="card-body d-flex flex-column gap-2">
+                    <div class="label">Permissions</div>
+                    <div class="value">@Model.TotalPermissions</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">Recent Staff Accounts</h5>
+                <a asp-action="AdminList" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Roles</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in Model.RecentAdmins)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@user.FullName</td>
+                                <td>@user.Email</td>
+                                <td>@string.Join(", ", user.Roles)</td>
+                                <td>@(string.IsNullOrWhiteSpace(user.Status) ? "active" : user.Status)</td>
+                                <td>@user.CreatedAt?.ToString("dd/MM/yyyy HH:mm")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

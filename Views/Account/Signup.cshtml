@@ -1,0 +1,109 @@
+@{
+    Layout = "_AuthLayout";
+}
+
+@model ITShop.ViewModels.SignupViewModel
+
+<div class="auth-shell">
+    <div class="auth-card row g-0" style="max-width: 1080px;">
+        <div class="col-lg-5 d-none d-lg-block">
+            <div class="auth-side d-flex flex-column justify-content-between">
+                <div>
+                    <div class="small text-uppercase fw-bold mb-3">Create Account</div>
+                    <h2 class="auth-title mb-3">Join ITShop and start building your setup.</h2>
+                    <p class="mb-0 opacity-75">สมัครเพื่อเก็บที่อยู่ ติดตามคำสั่งซื้อ และรับสิทธิ์จากคูปองหรือ invite
+                        code ได้ทันที</p>
+                    </div>
+                    <div class="small opacity-75">Fast checkout and order history</div>
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <div class="auth-form-wrap">
+                    <div class="mb-4">
+                        <div class="text-uppercase small fw-bold text-muted mb-2">Account</div>
+                        <h3 class="mb-1">Sign Up</h3>
+                    </div>
+
+                    @if (ViewBag.Error != null)
+                    {
+                        <div class="alert alert-danger">@ViewBag.Error</div>
+                    }
+
+                    @if (ViewBag.InviteWarning != null)
+                    {
+                        <div class="alert alert-warning">@ViewBag.InviteWarning</div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(Model?.InviteCode))
+                    {
+                        <div class="alert alert-info">
+                            <div class="fw-semibold">ระบบกรอก Invite Code ให้แล้วจาก invite link</div>
+                            <div class="small">โค้ด: @Model.InviteCode</div>
+                            @if (!string.IsNullOrWhiteSpace(Model.InviterName) ||
+                                                !string.IsNullOrWhiteSpace(Model.InvitePromotionName))
+                            {
+                                <div class="small mt-1">จาก @Model.InviterName
+                                    @(string.IsNullOrWhiteSpace(Model.InvitePromotionName) ? string.Empty : $"| โปรโมชัน                      {Model.InvitePromotionName}")</div>
+                                }
+                            </div>
+                        }
+
+                        <form asp-controller="Account" asp-action="Register" method="post">
+                            @Html.AntiForgeryToken()
+                            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label asp-for="InviteCode" class="form-label">Invite Code <span
+                                        class="text-muted">(optional)</span></label>
+                                        <input asp-for="InviteCode" class="form-control text-uppercase"
+                                               placeholder="เช่น INV12345678" />
+                                        <span asp-validation-for="InviteCode" class="text-danger"></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label asp-for="FirstName" class="form-label">First Name</label>
+                                        <input asp-for="FirstName" class="form-control" placeholder="Enter first name" />
+                                        <span asp-validation-for="FirstName" class="text-danger"></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label asp-for="LastName" class="form-label">Last Name</label>
+                                        <input asp-for="LastName" class="form-control" placeholder="Enter last name" />
+                                        <span asp-validation-for="LastName" class="text-danger"></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label asp-for="Email" class="form-label">Email</label>
+                                        <input asp-for="Email" type="email" class="form-control" placeholder="example@email.com" />
+                                        <span asp-validation-for="Email" class="text-danger"></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label asp-for="PhoneNumber" class="form-label">Phone</label>
+                                        <input asp-for="PhoneNumber" type="tel" class="form-control" placeholder="08xxxxxxxx" />
+                                        <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                                    </div>
+                                    <div class="col-12">
+                                        <label asp-for="PasswordHash" class="form-label">Password</label>
+                                        <input asp-for="PasswordHash" type="password" class="form-control"
+                                               placeholder="Enter password" />
+                                        <span asp-validation-for="PasswordHash" class="text-danger"></span>
+                                    </div>
+                                    <div class="col-12">
+                                        <label asp-for="Address" class="form-label">Address</label>
+                                        <textarea asp-for="Address" class="form-control" rows="3"
+                                                  placeholder="Your address"></textarea>
+                                        <span asp-validation-for="Address" class="text-danger"></span>
+                                    </div>
+                                </div>
+
+                                <div class="d-grid mt-4">
+                                    <button type="submit" class="btn btn-primary auth-action">Sign Up</button>
+                                </div>
+                            </form>
+
+                            <div class="mt-4 text-center user-compact-note">
+                                <a asp-controller="Account" asp-action="Login" class="text-decoration-none">Already have an account?
+                                    Login</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>

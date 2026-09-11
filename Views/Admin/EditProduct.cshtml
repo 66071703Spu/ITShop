@@ -1,0 +1,301 @@
+@model ITShop.ViewModels.ProductViewModel
+@{
+    Layout = "_AdminLayout";
+    var categories = ViewBag.Categories as List<ITShop.Models.Category> ?? new List<ITShop.Models.Category>();
+    var brands = ViewBag.Brands as List<ITShop.Models.Brand> ?? new List<ITShop.Models.Brand>();
+    var componentProducts = ViewBag.ComponentProducts as List<ITShop.Models.Product> ?? new List<ITShop.Models.Product>();
+    var comsetCategoryId = ViewBag.ComsetCategoryId as int?;
+
+    if (Model.PackageItemInputs == null || !Model.PackageItemInputs.Any())
+    {
+        Model.PackageItemInputs = new List<ITShop.ViewModels.PackageItemInputViewModel> { new() };
+    }
+}
+
+<div class="container-fluid admin-form-shell">
+    <div class="admin-form-header">
+        <div class="admin-form-title-wrap">
+            <div class="admin-icon-badge bg-warning-subtle text-warning-emphasis">
+                <i class="bi bi-pencil-square"></i>
+            </div>
+            <div>
+                <div class="admin-form-kicker">Catalog</div>
+                <h2 class="admin-form-title">Edit Product</h2>
+            </div>
+        </div>
+        <a asp-action="ProductList" class="btn btn-outline-secondary">Back to Products</a>
+    </div>
+
+    <div class="card border-0">
+        <div class="card-body">
+            @if (ViewBag.Error != null)
+            {
+                <div class="alert alert-danger">@ViewBag.Error</div>
+            }
+
+            <form asp-action="EditProduct" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <input asp-for="ProductId" type="hidden" />
+
+                <div class="row g-4">
+                    <div class="col-lg-8">
+                        <div class="admin-field-stack">
+                            <div class="admin-section-card">
+                                <div class="admin-section-title">Basic Information</div>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Product Name</label>
+                                        <input asp-for="Name" class="form-control" />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Price</label>
+                                        <input asp-for="Price" type="number" step="0.01" class="form-control" />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Stock</label>
+                                        <input asp-for="Stock" type="number" class="form-control" />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">SKU</label>
+                                        <input asp-for="Sku" class="form-control" />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Category</label>
+                                        <select asp-for="CategoryId" class="form-select">
+                                            <option value="">Select category</option>
+                                            @foreach (var category in categories)
+                                            {
+                                                <option value="@category.CategoryId">@category.Name</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Brand</label>
+                                        <select asp-for="BrandId" class="form-select">
+                                            <option value="">Select brand</option>
+                                            @foreach (var brand in brands)
+                                            {
+                                                <option value="@brand.BrandId">@brand.BrandName</option>
+                                            }
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="admin-section-card">
+                                <div class="admin-section-title">Description</div>
+                                <textarea asp-for="Description" rows="6" class="form-control"></textarea>
+                            </div>
+
+                            <div class="admin-section-card">
+                                <div class="admin-section-title">Comset Setup</div>
+                                <div class="form-check form-switch mb-3">
+                                    <input asp-for="IsPackageProduct" class="form-check-input" id="isComsetToggle" />
+                                    <label class="form-check-label" for="isComsetToggle">สินค้านี้เป็น Comset</label>
+                                </div>
+                                <div class="small text-muted mb-3">สามารถแก้ไขรายการสินค้าในเซตได้จากส่วนนี้
+                                    และถ้าปิดสวิตช์ ระบบจะลบความเป็น Comset ออกจากสินค้า</div>
+
+                                    <div id="comsetItemsSection"
+                                         class="border rounded-3 p-3 @(Model.IsPackageProduct ? string.Empty : "d-none")"
+                                         data-next-index="@Model.PackageItemInputs.Count">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <div>
+                                                <div class="fw-semibold">รายการสินค้าในเซต</div>
+                                                <div class="small text-muted">เพิ่ม ลบ หรือปรับจำนวนสินค้าแต่ละชิ้นใน Comset
+                                                    นี้</div>
+                                                </div>
+                                                <button type="button" class="btn btn-outline-primary btn-sm"
+                                                        id="addComsetItemButton">Add Item</button>
+                                            </div>
+
+                                            <div id="comsetItemList" class="d-grid gap-3">
+                                                @for (var i = 0; i < Model.PackageItemInputs.Count; i++)
+                                                {
+                                                    var item = Model.PackageItemInputs[i];
+                                                    <div class="border rounded-3 p-3 comset-item-row" data-index="@i">
+                                                        <input type="hidden" name="PackageItemInputs.Index" value="@i" />
+                                                        <div class="row g-3 align-items-end">
+                                                            <div class="col-md-7">
+                                                                <label class="form-label">Product</label>
+                                                                <select name="PackageItemInputs[@i].ProductId" class="form-select">
+                                                                    <option value="">Select product</option>
+                                                                    @foreach (var componentProduct in componentProducts)
+                                                                    {
+                                                                        <option value="@componentProduct.ProductId"
+                                                                                selected="@(item.ProductId == componentProduct.ProductId)">
+                                                                            @componentProduct.Name (@(componentProduct.Category?.Name ??
+                                                                            "ทั่วไป"))
+                                            </option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Quantity</label>
+                                    <input name="PackageItemInputs[@i].Quantity" type="number" min="1"
+                                           value="@item.Quantity" class="form-control" />
+                                </div>
+                                <div class="col-md-2 d-grid">
+                                    <button type="button"
+                                            class="btn btn-outline-danger remove-comset-item">Remove</button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="col-lg-4">
+    <div class="admin-field-stack">
+        <div class="admin-section-card">
+            <div class="admin-section-title">Catalog Settings</div>
+            <label class="admin-choice-card">
+                <input asp-for="IsActive" class="form-check-input" type="checkbox" role="switch" />
+                <span class="choice-body">
+                    <span class="fw-semibold d-block">Show Product On Storefront</span>
+                    <span class="admin-compact-note d-block">Visible in the customer catalog</span>
+                </span>
+            </label>
+        </div>
+
+        <div class="admin-section-card">
+            <div class="admin-section-title">Media</div>
+            @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+            {
+                <div class="mb-3">
+                    <div class="small text-muted mb-2">Current Image</div>
+                    <div class="border rounded-3 bg-white p-3 text-center">
+                        <img src="@Model.ImageUrl" alt="@Model.Name" class="img-fluid rounded-3"
+                             style="max-height: 220px; object-fit: contain;" />
+                    </div>
+                    <div class="admin-compact-note mt-2">อัปโหลดรูปใหม่เพื่อแทนที่รูปปัจจุบัน</div>
+                </div>
+            }
+            <label class="form-label">Upload Image</label>
+            <input asp-for="ImageFile" type="file" accept=".jpg,.jpeg,.png,.gif,.webp"
+                   class="form-control" />
+        </div>
+
+        <div class="admin-section-card">
+            <div class="admin-section-title">Quick Access</div>
+            <a asp-action="PromotionList" class="btn btn-outline-warning w-100">Promotion
+                Management</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="admin-action-row">
+    <button type="submit" class="btn btn-primary">Update Product</button>
+    <a asp-action="ProductList" class="btn btn-outline-secondary">Cancel</a>
+</div>
+</form>
+</div>
+</div>
+</div>
+
+<template id="comsetItemTemplate">
+    <div class="border rounded-3 p-3 comset-item-row" data-index="__index__">
+        <input type="hidden" name="PackageItemInputs.Index" value="__index__" />
+        <div class="row g-3 align-items-end">
+            <div class="col-md-7">
+                <label class="form-label">Product</label>
+                <select name="PackageItemInputs[__index__].ProductId" class="form-select">
+                    <option value="">Select product</option>
+                    @foreach (var componentProduct in componentProducts)
+                    {
+                        <option value="@componentProduct.ProductId">@componentProduct.Name
+                            (@(componentProduct.Category?.Name ?? "ทั่วไป"))</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Quantity</label>
+                    <input name="PackageItemInputs[__index__].Quantity" type="number" min="1" value="1"
+                           class="form-control" />
+                </div>
+                <div class="col-md-2 d-grid">
+                    <button type="button" class="btn btn-outline-danger remove-comset-item">Remove</button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script>
+        (() => {
+            const toggle = document.getElementById('isComsetToggle');
+            const section = document.getElementById('comsetItemsSection');
+            const list = document.getElementById('comsetItemList');
+            const addButton = document.getElementById('addComsetItemButton');
+            const template = document.getElementById('comsetItemTemplate');
+            const categorySelect = document.querySelector('select[name="CategoryId"]');
+            const comsetCategoryId = '@(comsetCategoryId?.ToString() ?? string.Empty)';
+            let previousCategoryId = categorySelect && categorySelect.value !== comsetCategoryId
+                ? categorySelect.value
+                : '';
+
+            if (!toggle || !section || !list || !addButton || !template) {
+                return;
+            }
+
+            const addRow = () => {
+                const nextIndex = Number(section.dataset.nextIndex || '0');
+                const html = template.innerHTML.replaceAll('__index__', String(nextIndex));
+                section.dataset.nextIndex = String(nextIndex + 1);
+                list.insertAdjacentHTML('beforeend', html);
+            };
+
+            const ensureAtLeastOneRow = () => {
+                if (!list.querySelector('.comset-item-row')) {
+                    addRow();
+                }
+            };
+
+            const updateSectionVisibility = () => {
+                const isEnabled = toggle.checked;
+                section.classList.toggle('d-none', !isEnabled);
+
+                if (isEnabled) {
+                    ensureAtLeastOneRow();
+                    if (categorySelect && comsetCategoryId) {
+                        if (categorySelect.value && categorySelect.value !== comsetCategoryId) {
+                            previousCategoryId = categorySelect.value;
+                        }
+                        categorySelect.value = comsetCategoryId;
+                    }
+                } else if (categorySelect && categorySelect.value === comsetCategoryId) {
+                    categorySelect.value = previousCategoryId;
+                }
+            };
+
+            categorySelect?.addEventListener('change', () => {
+                if (categorySelect.value !== comsetCategoryId) {
+                    previousCategoryId = categorySelect.value;
+                }
+            });
+
+            addButton.addEventListener('click', addRow);
+
+            list.addEventListener('click', (event) => {
+                const target = event.target;
+                if (!(target instanceof HTMLElement) || !target.classList.contains('remove-comset-item')) {
+                    return;
+                }
+
+                const row = target.closest('.comset-item-row');
+                if (row) {
+                    row.remove();
+                }
+
+                if (!list.querySelector('.comset-item-row') && toggle.checked) {
+                    addRow();
+                }
+            });
+
+            toggle.addEventListener('change', updateSectionVisibility);
+            updateSectionVisibility();
+        })();
+    </script>

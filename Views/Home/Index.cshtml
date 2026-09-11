@@ -1,0 +1,554 @@
+﻿@using ITShop.ViewModels
+@model ITShop.ViewModels.HomeViewModel
+@{
+    Layout = "_UserLayout";
+    var featuredBrands = Model.FeaturedBrands.ToList();
+    var topBanners = Model.TopBanners.Take(5).ToList();
+    var middleBanners = Model.MiddleBanners.Take(3).ToList();
+    var bottomBanners = Model.BottomBanners.Take(2).ToList();
+    var categoryLinks = new[]
+    {
+        new { Label = "CPU", Category = "CPU", Icon = "bi-cpu" },
+        new { Label = "Graphics Card", Category = "Graphics Card", Icon = "bi-gpu-card" },
+        new { Label = "Mainboard", Category = "Mainboard", Icon = "bi-motherboard" },
+        new { Label = "RAM", Category = "RAM", Icon = "bi-memory" },
+        new { Label = "Storage", Category = "Storage", Icon = "bi-device-ssd" },
+        new { Label = "Power Supply", Category = "Power Supply", Icon = "bi-lightning-charge" },
+        new { Label = "Cooling", Category = "Cooling", Icon = "bi-fan" },
+        new { Label = "Case", Category = "Case", Icon = "bi-pc-display" },
+        new { Label = "Monitor", Category = "Monitor", Icon = "bi-display" },
+        new { Label = "Laptop", Category = "Laptop", Icon = "bi-laptop" },
+        new { Label = "Mouse", Category = "Mouse", Icon = "bi-mouse" },
+        new { Label = "Keyboard", Category = "Keyboard", Icon = "bi-keyboard" },
+        new { Label = "Headset", Category = "Headset", Icon = "bi-headset" },
+        new { Label = "Gaming Gear", Category = "Gaming Gear", Icon = "bi-controller" },
+        new { Label = "Comset", Category = "Comset", Icon = "bi-box-seam" }
+    };
+
+    string CatalogUrl(string? section = null, string? category = null, string? brand = null)
+        => Url.Action("Index", "Product", new { section, category, brand }) ?? "#";
+
+    int ResolveProductId(ProductViewModel item) => item.ProductId > 0 ? item.ProductId : item.Id;
+
+    string ProductUrl(ProductViewModel item) => Url.Action("ProductDetail", "Product", new { id = ResolveProductId(item) }) ?? "#";
+
+    string ProductImage(ProductViewModel item) => item.Images?.FirstOrDefault() ?? "https://placehold.co/320x240?text=No+Image";
+
+    void RenderSectionHeader(string title, string subtitle, string url)
+    {
+        <div class="home-section-heading">
+            <div>
+                <div class="user-kicker">@subtitle</div>
+                <h3 class="home-section-title">@title</h3>
+            </div>
+            <a href="@url" class="btn btn-outline-secondary btn-sm">ดูทั้งหมด</a>
+        </div>
+    }
+
+    void RenderProductCard(ProductViewModel item)
+    {
+        <a href="@ProductUrl(item)" class="text-decoration-none text-dark">
+            <div class="card user-product-card home-product-card p-3 border-0">
+                <div class="home-product-image-wrap mb-3">
+                    <img src="@ProductImage(item)"
+                         alt="@item.Name"
+                         class="img-fluid home-product-image" />
+                </div>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                    @if (!string.IsNullOrWhiteSpace(item.BrandName))
+                    {
+                        <span class="badge bg-light text-dark">@item.BrandName</span>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(item.Sku))
+                    {
+                        <span class="badge bg-light text-dark">@item.Sku</span>
+                    }
+                </div>
+                <h6 class="mb-1 text-truncate">@item.Name</h6>
+                @if (item.HasAutoAppliedPromotion)
+                {
+                    <div>
+                        <div class="text-danger fw-bold mb-0">@item.Price.ToString("N2") บาท</div>
+                        <div class="small text-muted text-decoration-line-through">@item.OriginalPrice.ToString("N2") บาท</div>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-danger fw-bold mb-0">@item.Price.ToString("N2") บาท</div>
+                }
+            </div>
+        </a>
+    }
+
+    void RenderProductRail(string title, string subtitle, string url, string railId, IEnumerable<ProductViewModel> items, string emptyText)
+    {
+        <section class="home-section-panel mb-4">
+            @{ RenderSectionHeader(title, subtitle, url); }
+            <div id="@railId" class="home-rail">
+                @if (!items.Any())
+                {
+                    <div class="home-empty-state">@emptyText</div>
+                }
+                else
+                {
+                    @foreach (var item in items)
+                    {
+                        <div class="home-rail-item">
+                            @{ RenderProductCard(item); }
+                        </div>
+                    }
+                }
+            </div>
+        </section>
+    }
+}
+
+<style>
+    .home-shell {
+        display: grid;
+        gap: 1.5rem;
+    }
+
+    .home-hero-card,
+    .home-section-panel,
+    .home-banner-panel {
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid #e8e4dc;
+        border-radius: 28px;
+        box-shadow: 0 18px 44px rgba(32, 36, 48, 0.07);
+    }
+
+    /* ── Hero ── */
+    .home-hero-card { overflow: hidden; }
+
+    .home-hero-banner {
+        position: relative;
+        min-height: 340px;
+        background: linear-gradient(180deg, #fff8f3 0%, #fff 100%);
+    }
+
+    .home-hero-banner .carousel,
+    .home-hero-banner .carousel-inner,
+    .home-hero-banner .carousel-item {
+        height: 100%;
+    }
+
+    .home-hero-banner .carousel-item {
+        background: #f6f2ed;
+    }
+
+    .home-hero-banner .carousel-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .home-hero-banner .carousel-indicators {
+        z-index: 4;
+        margin-bottom: 1rem;
+    }
+
+    .home-hero-banner .carousel-indicators button {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+    }
+
+    .home-hero-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, rgba(17, 18, 24, 0.48) 0%, rgba(17, 18, 24, 0.18) 46%, rgba(17, 18, 24, 0.04) 100%);
+        z-index: 2;
+        display: flex;
+        align-items: flex-end;
+        padding: 2.5rem;
+        pointer-events: none;
+    }
+
+    .home-hero-panel {
+        max-width: 580px;
+        color: #fff;
+        padding: 1.35rem 1.4rem;
+        border-radius: 24px;
+        background: linear-gradient(180deg, rgba(20, 20, 27, 0.68) 0%, rgba(20, 20, 27, 0.54) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 18px 40px rgba(8, 10, 18, 0.24);
+        pointer-events: auto;
+    }
+
+    .home-hero-copy {
+        color: #fff;
+    }
+
+    .home-hero-kicker {
+        display: inline-block;
+        background: rgba(255,255,255,0.18);
+        backdrop-filter: blur(6px);
+        border: 1px solid rgba(255,255,255,0.22);
+        color: #fff;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        padding: 0.3rem 0.85rem;
+        border-radius: 100px;
+        margin-bottom: 0.85rem;
+    }
+
+    .home-hero-title {
+        font-size: clamp(1.45rem, 2.5vw, 2.3rem);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        line-height: 1.16;
+        margin-bottom: 0.6rem;
+        color: #fff;
+        text-shadow: 0 2px 12px rgba(0,0,0,0.25);
+    }
+
+    .home-hero-copy p {
+        color: rgba(255,255,255,0.86);
+        font-size: 0.92rem;
+        margin-bottom: 1.2rem;
+        line-height: 1.55;
+    }
+
+    .home-hero-copy .btn-light {
+        border-radius: 100px;
+        padding: 0.55rem 1.5rem;
+        font-weight: 600;
+        border: none;
+    }
+
+    .home-hero-copy .btn-outline-light {
+        border-radius: 100px;
+        padding: 0.55rem 1.5rem;
+        font-weight: 600;
+    }
+
+    /* ── Stat strip ── */
+    .home-stat-strip {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0;
+        border-top: 1px solid #ece4db;
+    }
+
+    .home-stat-item {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        padding: 1.1rem 1.5rem;
+        border-right: 1px solid #ece4db;
+    }
+
+    .home-stat-item:last-child { border-right: none; }
+
+    .home-stat-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 14px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.15rem;
+        flex-shrink: 0;
+    }
+
+    .home-stat-icon.brands  { background: #fff0ea; color: #ea6a3b; }
+    .home-stat-icon.arrivals { background: #e8f5e9; color: #388e3c; }
+    .home-stat-icon.sellers  { background: #e3f2fd; color: #1976d2; }
+
+    .home-stat-value {
+        font-size: 1.35rem;
+        font-weight: 800;
+        line-height: 1.1;
+    }
+
+    .home-stat-label {
+        font-size: 0.78rem;
+        color: #8e8c88;
+        font-weight: 500;
+    }
+
+    /* ── Sections ── */
+    .home-banner-frame {
+        overflow: hidden;
+        border-radius: 20px;
+        border: 1px solid #ece4db;
+    }
+
+    .home-banner-frame img {
+        width: 100%;
+        display: block;
+    }
+
+    .home-banner-grid .home-banner-frame,
+    .home-banner-split .home-banner-frame { box-shadow: none !important; }
+
+    .home-banner-grid,
+    .home-banner-split { padding: 1.25rem; }
+
+    .home-section-panel { padding: 1.25rem; }
+
+    .home-section-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .home-section-title {
+        margin: 0;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+    }
+
+    /* ── Brand cards ── */
+    .home-brand-card,
+    .home-category-card {
+        border-radius: 22px;
+        height: 100%;
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .home-brand-card:hover,
+    .home-category-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    }
+
+    .home-brand-logo {
+        object-fit: contain;
+        padding: 0.5rem;
+    }
+
+    /* ── Product rail ── */
+    .home-rail {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .home-rail-item {
+        min-width: 0;
+        width: auto;
+    }
+
+    .home-product-card { min-height: 100%; }
+
+    .home-product-image-wrap {
+        border-radius: 18px;
+        border: 1px solid #ece4db;
+        background: #f8f7f3;
+        padding: 0.85rem;
+    }
+
+    .home-product-image {
+        width: 100%;
+        height: 150px;
+        object-fit: contain;
+    }
+
+    /* ── Category cards ── */
+    .home-category-card {
+        display: flex;
+        align-items: center;
+        gap: 0.9rem;
+        padding: 1rem 1.1rem;
+        border: 1px solid #e8e4dc;
+        background: rgba(255,255,255,0.78);
+    }
+
+    .home-category-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #fff0ea;
+        color: #ea6a3b;
+        font-size: 1.15rem;
+        flex: 0 0 auto;
+    }
+
+    .home-empty-state {
+        width: 100%;
+        border: 1px dashed #d9d1c6;
+        border-radius: 20px;
+        background: #fbfaf7;
+        padding: 1rem 1.1rem;
+        color: #6e7587;
+    }
+
+    @@media (max-width: 991.98px) {
+        .home-stat-strip { grid-template-columns: 1fr; }
+        .home-stat-item { border-right: none; border-bottom: 1px solid #ece4db; }
+        .home-stat-item:last-child { border-bottom: none; }
+        .home-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .home-hero-overlay { padding: 1.25rem; }
+        .home-hero-panel { padding: 1.1rem 1rem; }
+        .home-hero-title { font-size: 1.5rem; }
+        .home-section-heading { flex-direction: column; align-items: stretch; }
+    }
+
+    @@media (max-width: 575.98px) {
+        .home-rail { grid-template-columns: 1fr; }
+        .home-hero-banner { min-height: 280px; }
+    }
+</style>
+
+<div class="container py-3 home-shell">
+    <section class="home-hero-card">
+        <div class="home-hero-banner">
+            <div id="mainBanner" class="carousel slide h-100" data-bs-ride="carousel">
+                <div class="carousel-indicators">
+                    @for (int i = 0; i < topBanners.Count; i++)
+                    {
+                        <button type="button"
+                                data-bs-target="#mainBanner"
+                                data-bs-slide-to="@i"
+                                class="@(i == 0 ? "active" : string.Empty)"
+                                aria-current="@(i == 0 ? "true" : "false")"
+                                aria-label="Slide @(i + 1)"></button>
+                    }
+                </div>
+
+                <div class="carousel-inner h-100">
+                    @for (int i = 0; i < topBanners.Count; i++)
+                    {
+                        var banner = topBanners[i];
+                        <div class="carousel-item h-100 @(i == 0 ? "active" : "")">
+                            <img src="@banner.ImageUrl" class="d-block" alt="@(banner.Title ?? "Banner")">
+                        </div>
+                    }
+                </div>
+
+                <button class="carousel-control-prev" type="button" data-bs-target="#mainBanner" data-bs-slide="prev" style="z-index:3;">
+                    <span class="carousel-control-prev-icon"></span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#mainBanner" data-bs-slide="next" style="z-index:3;">
+                    <span class="carousel-control-next-icon"></span>
+                </button>
+            </div>
+
+            <div class="home-hero-overlay">
+                <div class="home-hero-panel">
+                    <div class="home-hero-copy">
+                        <span class="home-hero-kicker">Storefront</span>
+                        <h1 class="home-hero-title">Build your setup with parts, bundles &amp; live promotions.</h1>
+                        <p>รวมชิ้นส่วนประกอบคอม ชุดคอมสำเร็จ และอุปกรณ์เกมมิ่ง พร้อมโปรโมชันล่าสุดไว้ในที่เดียว</p>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a href="@CatalogUrl()" class="btn btn-light">ดูสินค้าทั้งหมด</a>
+                            <a href="@CatalogUrl(section: "promotion")" class="btn btn-outline-light">ดูโปรโมชัน</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="home-stat-strip">
+            <div class="home-stat-item">
+                <span class="home-stat-icon brands"><i class="bi bi-tags-fill"></i></span>
+                <div>
+                    <div class="home-stat-value">@featuredBrands.Count</div>
+                    <div class="home-stat-label">Popular Brands</div>
+                </div>
+            </div>
+            <div class="home-stat-item">
+                <span class="home-stat-icon arrivals"><i class="bi bi-box-seam-fill"></i></span>
+                <div>
+                    <div class="home-stat-value">@Model.NewArrivals.Count()</div>
+                    <div class="home-stat-label">New Arrivals</div>
+                </div>
+            </div>
+            <div class="home-stat-item">
+                <span class="home-stat-icon sellers"><i class="bi bi-trophy-fill"></i></span>
+                <div>
+                    <div class="home-stat-value">@Model.BestSellers.Count()</div>
+                    <div class="home-stat-label">Best Sellers</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="home-banner-panel home-banner-grid">
+        <div class="home-section-heading">
+            <div>
+                <div class="user-kicker">Highlights</div>
+                <h3 class="home-section-title">Spotlight campaigns</h3>
+            </div>
+        </div>
+        <div class="row g-3">
+            @foreach (var banner in middleBanners)
+            {
+                <div class="col-md-4">
+                    <div class="home-banner-frame home-banner-frame-middle bg-white">
+                        <img src="@banner.ImageUrl" class="home-banner-image" alt="@(banner.Title ?? "Banner")">
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+
+    <section class="home-section-panel">
+        @{ RenderSectionHeader("Popular Brands", "Brands", CatalogUrl()); }
+        <div class="row g-3">
+            @foreach (var brand in featuredBrands)
+            {
+                <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+                    <a href="@CatalogUrl(brand: brand.BrandName)" class="text-decoration-none text-dark">
+                        <div class="card home-brand-card border-0 text-center p-3">
+                            <div class="ratio ratio-16x9 mb-2">
+                                <img src="@(brand.LogoUrl ?? "https://placehold.co/320x160?text=Brand")" alt="@brand.BrandName" class="img-fluid rounded home-brand-logo bg-light" />
+                            </div>
+                            <div class="fw-semibold small">@brand.BrandName</div>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+    </section>
+
+    @{ RenderProductRail("Promotion", "Deals", CatalogUrl(section: "promotion"), "promoList", Model.Promotions, "ยังไม่มีสินค้าที่ถูกตั้งเป็น Promotion"); }
+
+    <section class="home-banner-panel home-banner-split">
+        <div class="row g-3">
+            @foreach (var banner in bottomBanners)
+            {
+                <div class="col-md-6">
+                    <div class="home-banner-frame home-banner-frame-bottom bg-white">
+                        <img src="@banner.ImageUrl" class="home-banner-image" alt="@(banner.Title ?? "Banner")">
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+
+    @{ RenderProductRail("New Arrival", "Fresh In", CatalogUrl(section: "new"), "newArrivalList", Model.NewArrivals, "ยังไม่มีสินค้าใหม่ในช่วงนี้"); }
+    @{ RenderProductRail("Best Seller", "Popular Picks", CatalogUrl(section: "bestseller"), "bestSellerList", Model.BestSellers, "ยังไม่มีสินค้าขายดีในตอนนี้"); }
+
+    <section class="home-section-panel">
+        @{ RenderSectionHeader("Categories", "Browse", CatalogUrl()); }
+        <div class="row g-3">
+            @foreach (var item in categoryLinks)
+            {
+                <div class="col-sm-6 col-lg-4 col-xl-3">
+                    <a href="@CatalogUrl(category: item.Category)" class="text-decoration-none text-dark">
+                        <div class="home-category-card">
+                            <span class="home-category-icon"><i class="bi @item.Icon"></i></span>
+                            <div class="fw-semibold">@item.Label</div>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+    </section>
+
+    @{ RenderProductRail("CPU", "Components", CatalogUrl(category: "CPU"), "cpuList", Model.CPUs, "ยังไม่มีสินค้าหมวด CPU"); }
+    @{ RenderProductRail("Graphics Card", "Graphics", CatalogUrl(category: "Graphics Card"), "graphicsCardList", Model.GraphicsCards, "ยังไม่มีสินค้าหมวด Graphics Card"); }
+    @{ RenderProductRail("Laptop", "Portable", CatalogUrl(category: "Laptop"), "laptopList", Model.Laptops, "ยังไม่มีสินค้าหมวด Laptop"); }
+</div>

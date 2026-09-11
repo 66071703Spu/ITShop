@@ -1,0 +1,214 @@
+@using System.Linq
+@model IEnumerable<ITShop.ViewModels.CartViewModel>
+@{
+    Layout = "_UserLayout";
+    var items = Model?.ToList() ?? new List<ITShop.ViewModels.CartViewModel>();
+    var subtotal = items.Sum(x => x.OriginalSubTotal);
+    var totalDiscount = items.Sum(x => x.DiscountAmount * x.Quantity);
+    string? appliedCouponCode = ViewBag.AppliedCouponCode as string;
+    string? appliedCouponPromotionName = ViewBag.AppliedCouponPromotionName as string;
+    decimal couponDiscount = ViewBag.AppliedCouponDiscountAmount != null ? (decimal)ViewBag.AppliedCouponDiscountAmount : 0m;
+    var availableCoupons = ViewBag.AvailableCoupons as List<ITShop.ViewModels.CouponDisplayViewModel> ?? new List<ITShop.ViewModels.CouponDisplayViewModel>();
+    decimal shippingFee = ViewBag.ShippingFee != null ? (decimal)ViewBag.ShippingFee : 60m;
+    var finalTotal = subtotal - totalDiscount - couponDiscount + shippingFee;
+}
+
+<div class="container py-3">
+    <div class="user-page-header">
+        <h2 class="user-page-title">My Cart</h2>
+        <a asp-controller="Product" asp-action="Index" class="btn btn-outline-secondary">Continue Shopping</a>
+    </div>
+
+    @if (TempData["CartSuccess"] != null)
+    {
+        <div class="alert alert-success">@TempData["CartSuccess"]</div>
+    }
+
+    @if (TempData["CartError"] != null)
+    {
+        <div class="alert alert-danger">@TempData["CartError"]</div>
+    }
+
+    @if (!items.Any())
+    {
+        <div class="alert alert-info">ยังไม่มีสินค้าในตะกร้า</div>
+        <a asp-controller="Product" asp-action="Index" class="btn btn-primary">เลือกซื้อสินค้า</a>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card border-0">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Product</th>
+                                <th>Price</th>
+                                <th>Qty</th>
+                                <th>Total</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in items)
+                            {
+                                var availableStock = Math.Max(item.Stock ?? 0, 0);
+                                var canIncreaseQuantity = availableStock > item.Quantity;
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-3">
+                                                <img src="@(item.ImageUrl ?? "https://placehold.co/80x80")" width="80" height="80"
+                                                    class="user-media-thumb" style="object-fit:cover;" />
+                                            <div>
+                                                <div class="fw-semibold">@item.ProductName</div>
+                                                @if (!string.IsNullOrWhiteSpace(item.BrandName))
+                                                {
+                                                    <div class="small text-muted">Brand: @item.BrandName</div>
+                                                }
+                                                @if (item.HasAutoAppliedPromotion && !string.IsNullOrWhiteSpace(item.ActivePromotionName))
+                                                {
+                                                    <div class="small text-success">Auto Apply: @item.ActivePromotionName</div>
+                                                }
+                                                <div class="small @(availableStock > 0 ? "text-muted" : "text-danger")">
+                                                    @(availableStock > 0 ? $"Available: {availableStock}" : "Out of stock")
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold">@item.Price.ToString("N2") บาท</div>
+                                        @if (item.HasAutoAppliedPromotion)
+                                        {
+                                            <div class="small text-muted text-decoration-line-through">@item.OriginalPrice.ToString("N2") บาท</div>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <form asp-action="UpdateQuantity" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="cartItemId" value="@item.CartItemId" />
+                                                <input type="hidden" name="actionType" value="decrease" />
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary">-</button>
+                                            </form>
+
+                                            <span class="fw-semibold">@item.Quantity</span>
+
+                                            <form asp-action="UpdateQuantity" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="cartItemId" value="@item.CartItemId" />
+                                                <input type="hidden" name="actionType" value="increase" />
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary" disabled="@(!canIncreaseQuantity)">+</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                    <td>@item.SubTotal.ToString("N2") บาท</td>
+                                    <td>
+                                        <form asp-action="Remove" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="cartItemId" value="@item.CartItemId" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card border-0 sticky-lg-top" style="top: 1rem;">
+                    <div class="card-body">
+                        <h5 class="card-title">Order Summary</h5>
+                            <form asp-action="ApplyCoupon" method="post" class="mb-3">
+                                @Html.AntiForgeryToken()
+                                <div class="input-group">
+                                    <input type="text" name="couponCode" class="form-control text-uppercase" placeholder="Coupon code" value="@(appliedCouponCode ?? string.Empty)" />
+                                    <button type="submit" class="btn btn-outline-primary">Apply</button>
+                                </div>
+                            </form>
+                            @if (availableCoupons.Any())
+                            {
+                                <div class="mb-3">
+                                    <div class="small fw-semibold mb-2">Coupons for this cart</div>
+                                    <div class="d-grid gap-2">
+                                        @foreach (var coupon in availableCoupons.Take(3))
+                                        {
+                                            <div class="user-soft-panel">
+                                                <div class="d-flex justify-content-between gap-2 align-items-start">
+                                                    <div>
+                                                        <div class="fw-semibold">@coupon.Code</div>
+                                                        <div class="small text-muted">@coupon.PromotionName</div>
+                                                    </div>
+                                                    <span class="badge text-bg-success">@coupon.DiscountLabel</span>
+                                                </div>
+                                                <div class="small text-muted mt-2">@coupon.ApplicableProductSummary</div>
+                                                @if (coupon.MinimumOrderSubtotal.HasValue)
+                                                {
+                                                    <div class="small text-muted">ขั้นต่ำ @coupon.MinimumOrderSubtotal.Value.ToString("N2") บาท</div>
+                                                }
+                                                <div class="small @(coupon.IsCurrentlyEligible ? "text-success" : "text-warning") mt-1">@coupon.EligibilityMessage</div>
+                                                @if (coupon.IsCurrentlyEligible)
+                                                {
+                                                    <form asp-action="ApplyCoupon" method="post" class="mt-2">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="couponCode" value="@coupon.Code" />
+                                                        <button type="submit" class="btn btn-sm btn-outline-primary">Use This Coupon</button>
+                                                    </form>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(appliedCouponCode))
+                            {
+                                <div class="user-soft-panel bg-success-subtle mb-3">
+                                    <div class="fw-semibold">Coupon: @appliedCouponCode</div>
+                                    <div class="small text-muted">@appliedCouponPromotionName</div>
+                                    <div class="small text-success">Discount -@couponDiscount.ToString("N2") บาท</div>
+                                    <form asp-action="RemoveCoupon" method="post" class="mt-2">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Remove Coupon</button>
+                                    </form>
+                                </div>
+                            }
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Subtotal</span>
+                            <span>@subtotal.ToString("N2") บาท</span>
+                        </div>
+                        @if (totalDiscount > 0)
+                        {
+                            <div class="d-flex justify-content-between mb-2 text-success">
+                                <span>Auto Apply Discount</span>
+                                <span>-@totalDiscount.ToString("N2") บาท</span>
+                            </div>
+                        }
+                        @if (couponDiscount > 0)
+                        {
+                            <div class="d-flex justify-content-between mb-2 text-success">
+                                <span>Coupon Discount</span>
+                                <span>-@couponDiscount.ToString("N2") บาท</span>
+                            </div>
+                        }
+                        <div class="d-flex justify-content-between mb-3">
+                            <span>Shipping</span>
+                            <span>@shippingFee.ToString("N2") บาท</span>
+                        </div>
+                        <hr />
+                        <div class="d-flex justify-content-between fw-bold mb-3">
+                            <span>Total</span>
+                            <span>@finalTotal.ToString("N2") บาท</span>
+                        </div>
+
+                        <a asp-action="Checkout" class="btn btn-success w-100">Proceed to Checkout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

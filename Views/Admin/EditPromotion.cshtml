@@ -1,0 +1,377 @@
+@model ITShop.ViewModels.PromotionViewModel
+@{
+    Layout = "_AdminLayout";
+    var products = Model.ProductOptions ?? new List<ITShop.ViewModels.PromotionProductOptionViewModel>();
+    var categories = products
+        .Select(p => p.CategoryName)
+        .Where(c => !string.IsNullOrWhiteSpace(c))
+        .Distinct()
+        .OrderBy(c => c)
+        .ToList();
+    var brands = products
+        .Where(p => p.BrandId.HasValue && !string.IsNullOrWhiteSpace(p.BrandName))
+        .GroupBy(p => p.BrandId!.Value)
+        .Select(group => new { BrandId = group.Key, BrandName = group.First().BrandName! })
+        .OrderBy(b => b.BrandName)
+        .ToList();
+}
+
+<div class="container-fluid admin-form-shell">
+    <div class="admin-form-header">
+        <div class="admin-form-title-wrap">
+            <div class="admin-icon-badge bg-warning-subtle text-warning-emphasis">
+                <i class="bi bi-pencil-square"></i>
+            </div>
+            <div>
+                <div class="admin-form-kicker">Campaign</div>
+                <h2 class="admin-form-title">Edit Promotion</h2>
+            </div>
+        </div>
+        <a asp-action="PromotionList" class="btn btn-outline-secondary">Back to Promotions</a>
+    </div>
+
+    <div class="card border-0">
+        <div class="card-body">
+
+            @if (ViewBag.Error != null)
+            {
+                <div class="alert alert-danger">@ViewBag.Error</div>
+            }
+
+            <form asp-action="EditPromotion" method="post">
+                @Html.AntiForgeryToken()
+                <input asp-for="PromotionId" type="hidden" />
+
+                <div class="row g-4">
+                    <div class="col-lg-8">
+                        <div class="admin-field-stack">
+                            <div class="admin-section-card">
+                                <div class="admin-section-title">Promotion Setup</div>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Promotion Name</label>
+                                        <input asp-for="Name" class="form-control" />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Promotion Type</label>
+                                        <select asp-for="PromotionType" class="form-select" id="promotionTypeSelect">
+                                            <option value="invite">Invite</option>
+                                            <option value="brand_event">Brand Event</option>
+                                            <option value="coupon">Coupon</option>
+                                            <option value="seasonal">Seasonal</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Discount Type</label>
+                                        <select asp-for="DiscountType" class="form-select">
+                                            <option value="percent">percent</option>
+                                            <option value="fixed">fixed</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Discount Value</label>
+                                        <input asp-for="DiscountValue" type="number" step="0.01" min="0"
+                                               class="form-control" />
+                                    </div>
+                                    <div class="col-md-8">
+                                        <div
+                                            class="admin-soft-panel h-100 d-flex align-items-center justify-content-between gap-3">
+                                            <div>
+                                                <div class="admin-compact-note mb-1">Selected Type</div>
+                                                <div class="fw-semibold mb-0" id="promotionTypeLabel">
+                                                    @Model.PromotionTypeLabel</div>
+                                                </div>
+                                                <i class="bi bi-stars text-primary fs-4"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="admin-section-card">
+                                    <div class="admin-section-title">Product Assignment</div>
+                                    @if (!products.Any())
+                                    {
+                                        <div class="alert alert-warning mb-0">ยังไม่มีสินค้าให้เลือก</div>
+                                    }
+                                    else
+                                    {
+                                        <div class="admin-soft-panel mb-3">
+                                            <div class="row g-3 align-items-end">
+                                                <div class="col-md-5">
+                                                    <label class="form-label">Search Product</label>
+                                                    <input type="text" id="promotionProductSearch" class="form-control" />
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Category</label>
+                                                    <select id="promotionProductCategory" class="form-select">
+                                                        <option value="">All Categories</option>
+                                                        @foreach (var category in categories)
+                                                        {
+                                                            <option value="@category">@category</option>
+                                                        }
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label">Brand</label>
+                                                    <select id="promotionProductBrand" class="form-select">
+                                                        <option value="">All Brands</option>
+                                                        @foreach (var brand in brands)
+                                                        {
+                                                            <option value="@brand.BrandId">@brand.BrandName</option>
+                                                        }
+                                                    </select>
+                                                </div>
+                                                <div
+                                                    class="col-12 d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+                                                    <div class="admin-compact-note">Selected Products: <span
+                                                        id="selectedProductCount">0</span></div>
+                                                        <div class="d-flex gap-2 w-100 w-lg-auto">
+                                                            <button type="button" id="selectVisibleProducts"
+                                                                    class="btn btn-outline-primary btn-sm flex-fill">Select
+                                                                Visible</button>
+                                                                <button type="button" id="clearVisibleProducts"
+                                                                        class="btn btn-outline-secondary btn-sm flex-fill">Clear
+                                                                    Visible</button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="admin-soft-panel" style="max-height: 420px; overflow-y: auto;">
+                                                        <div class="row g-3" id="promotionProductList">
+                                                            @foreach (var product in products)
+                                                            {
+                                                                <div class="col-md-6 promotion-product-item"
+                                                                     data-name="@product.Name.ToLowerInvariant()"
+                                                                     data-category="@((product.CategoryName ?? string.Empty).ToLowerInvariant())"
+                                                                     data-brand="@((product.BrandName ?? string.Empty).ToLowerInvariant())"
+                                                                     data-brand-id="@(product.BrandId?.ToString() ?? string.Empty)">
+                                                                    <label class="admin-choice-card">
+                                                                        <input type="checkbox" name="ProductIds" value="@product.ProductId"
+                                                                               class="form-check-input promotion-product-checkbox"
+                                                                        @(product.IsSelected ? "checked" : null) />
+                                                                        <span class="choice-body">
+                                                                            <span class="fw-semibold d-block">@product.Name</span>
+                                                                            <span
+                                                                                class="small text-muted">@(string.IsNullOrWhiteSpace(product.CategoryName)
+                                                                                                                                        ? "No category" : product.CategoryName) |
+                                                                                @(string.IsNullOrWhiteSpace(product.BrandName) ? "No brand" :
+                                                                                product.BrandName) | @product.Price.ToString("0.##") บาท</span>
+                                                                            </span>
+                                                                        </label>
+                                                                    </div>
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-lg-4">
+                                            <div class="admin-field-stack">
+                                                <div class="admin-section-card">
+                                                    <div class="admin-section-title">Campaign Details</div>
+                                                    <div class="mb-3 @(Model.PromotionType == "brand_event" ? string.Empty : "d-none")"
+                                                         id="brandEventBrandSection">
+                                                        <label class="form-label fw-semibold">Brand Event Brand</label>
+                                                        <select asp-for="BrandEventBrandId" class="form-select" id="brandEventBrandId">
+                                                            <option value="">-</option>
+                                                            @foreach (var brand in brands)
+                                                            {
+                                                                <option value="@brand.BrandId">@brand.BrandName</option>
+                                                            }
+                                                        </select>
+                                                    </div>
+
+                                                    <div class="@(Model.PromotionType == "coupon" ? string.Empty : "d-none")"
+                                                         id="couponConfigSection">
+                                                        <div class="admin-field-stack">
+                                                            <div>
+                                                                <label class="form-label fw-semibold">Coupon Code</label>
+                                                                <input asp-for="CouponCode" class="form-control text-uppercase" />
+                                                            </div>
+                                                            <div>
+                                                                <label class="form-label fw-semibold">Usage Limit</label>
+                                                                <input asp-for="CouponUsageLimit" type="number" min="1"
+                                                                       class="form-control" />
+                                                            </div>
+                                                            <div>
+                                                                <label class="form-label fw-semibold">Minimum Order Subtotal</label>
+                                                                <input asp-for="MinimumOrderSubtotal" type="number" min="0" step="0.01"
+                                                                       class="form-control" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="admin-section-card">
+                                                    <div class="admin-section-title">Schedule</div>
+                                                    <div class="admin-field-stack">
+                                                        <div>
+                                                            <label class="form-label">Start Date</label>
+                                                            <input asp-for="StartDate" type="datetime-local" class="form-control" />
+                                                        </div>
+                                                        <div>
+                                                            <label class="form-label">End Date</label>
+                                                            <input asp-for="EndDate" type="datetime-local" class="form-control" />
+                                                        </div>
+                                                        <label class="admin-choice-card">
+                                                            <input asp-for="IsAutoApply" class="form-check-input" type="checkbox"
+                                                                   role="switch" />
+                                                            <span class="choice-body">
+                                                                <span class="fw-semibold d-block">Auto Apply</span>
+                                                                <span class="admin-compact-note d-block">Apply automatically when
+                                                                    eligible</span>
+                                                                </span>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="admin-action-row">
+                                            <button type="submit" class="btn btn-primary">Update Promotion</button>
+                                            <a asp-action="PromotionList" class="btn btn-outline-secondary">Cancel</a>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        @section Scripts {
+                            <script>
+                                (() => {
+                                    const searchInput = document.getElementById('promotionProductSearch');
+                                    const categorySelect = document.getElementById('promotionProductCategory');
+                                    const brandSelect = document.getElementById('promotionProductBrand');
+                                    const selectedCount = document.getElementById('selectedProductCount');
+                                    const promotionTypeSelect = document.getElementById('promotionTypeSelect');
+                                    const promotionTypeLabel = document.getElementById('promotionTypeLabel');
+                                    const brandEventBrandSection = document.getElementById('brandEventBrandSection');
+                                    const brandEventBrandSelect = document.getElementById('brandEventBrandId');
+                                    const couponConfigSection = document.getElementById('couponConfigSection');
+                                    const autoApplySwitch = document.getElementById('IsAutoApply');
+                                    const items = Array.from(document.querySelectorAll('.promotion-product-item'));
+                                    const checkboxes = Array.from(document.querySelectorAll('.promotion-product-checkbox'));
+                                    const selectVisibleButton = document.getElementById('selectVisibleProducts');
+                                    const clearVisibleButton = document.getElementById('clearVisibleProducts');
+                                    const promotionTypeMeta = {
+                                        invite: {
+                                            label: 'Invite'
+                                        },
+                                        brand_event: {
+                                            label: 'Brand Event'
+                                        },
+                                        coupon: {
+                                            label: 'Coupon'
+                                        },
+                                        seasonal: {
+                                            label: 'Seasonal'
+                                        }
+                                    };
+
+                                    if (!items.length) {
+                                        return;
+                                    }
+
+                                    const updateSelectedCount = () => {
+                                        selectedCount.textContent = checkboxes.filter(checkbox => checkbox.checked).length;
+                                    };
+
+                                    const applyFilter = () => {
+                                        const searchValue = (searchInput?.value || '').trim().toLowerCase();
+                                        const categoryValue = (categorySelect?.value || '').trim().toLowerCase();
+                                        const brandValue = (brandSelect?.value || '').trim();
+
+                                        items.forEach(item => {
+                                            const name = item.dataset.name || '';
+                                            const category = item.dataset.category || '';
+                                            const brandId = item.dataset.brandId || '';
+                                            const matchesSearch = !searchValue || name.includes(searchValue);
+                                            const matchesCategory = !categoryValue || category === categoryValue;
+                                            const matchesBrand = !brandValue || brandId === brandValue;
+                                            item.style.display = matchesSearch && matchesCategory && matchesBrand ? '' : 'none';
+                                        });
+                                    };
+
+                                    const syncBrandEventProducts = () => {
+                                        const selectedType = promotionTypeSelect?.value || 'seasonal';
+                                        const selectedBrandId = (brandEventBrandSelect?.value || '').trim();
+                                        if (selectedType !== 'brand_event' || !selectedBrandId) {
+                                            return;
+                                        }
+
+                                        items.forEach(item => {
+                                            const checkbox = item.querySelector('.promotion-product-checkbox');
+                                            if (!checkbox) {
+                                                return;
+                                            }
+
+                                            checkbox.checked = (item.dataset.brandId || '') === selectedBrandId;
+                                        });
+
+                                        updateSelectedCount();
+                                    };
+
+                                    const applyPromotionTypeMeta = () => {
+                                        const selectedType = promotionTypeSelect?.value || 'seasonal';
+                                        const meta = promotionTypeMeta[selectedType] || promotionTypeMeta.seasonal;
+                                        if (promotionTypeLabel) {
+                                            promotionTypeLabel.textContent = meta.label;
+                                        }
+                                        if (brandEventBrandSection) {
+                                            brandEventBrandSection.classList.toggle('d-none', selectedType !== 'brand_event');
+                                        }
+                                        if (couponConfigSection) {
+                                            couponConfigSection.classList.toggle('d-none', selectedType !== 'coupon');
+                                        }
+                                        if (selectedType !== 'brand_event' && brandEventBrandSelect) {
+                                            brandEventBrandSelect.value = '';
+                                        }
+                                        if (autoApplySwitch) {
+                                            autoApplySwitch.checked = (selectedType === 'coupon' || selectedType === 'invite') ? false : autoApplySwitch.checked;
+                                            autoApplySwitch.disabled = selectedType === 'coupon' || selectedType === 'invite';
+                                        }
+                                        syncBrandEventProducts();
+                                    };
+
+                                    selectVisibleButton?.addEventListener('click', () => {
+                                        items.forEach(item => {
+                                            if (item.style.display !== 'none') {
+                                                const checkbox = item.querySelector('.promotion-product-checkbox');
+                                                if (checkbox) {
+                                                    checkbox.checked = true;
+                                                }
+                                            }
+                                        });
+                                        updateSelectedCount();
+                                    });
+
+                                    clearVisibleButton?.addEventListener('click', () => {
+                                        items.forEach(item => {
+                                            if (item.style.display !== 'none') {
+                                                const checkbox = item.querySelector('.promotion-product-checkbox');
+                                                if (checkbox) {
+                                                    checkbox.checked = false;
+                                                }
+                                            }
+                                        });
+                                        updateSelectedCount();
+                                    });
+
+                                    searchInput?.addEventListener('input', applyFilter);
+                                    categorySelect?.addEventListener('change', applyFilter);
+                                    brandSelect?.addEventListener('change', applyFilter);
+                                    promotionTypeSelect?.addEventListener('change', applyPromotionTypeMeta);
+                                    brandEventBrandSelect?.addEventListener('change', syncBrandEventProducts);
+                                    checkboxes.forEach(checkbox => checkbox.addEventListener('change', updateSelectedCount));
+
+                                    applyFilter();
+                                    applyPromotionTypeMeta();
+                                    updateSelectedCount();
+                                })();
+                            </script>
+                        }

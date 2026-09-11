@@ -1,0 +1,82 @@
+@model IEnumerable<ITShop.ViewModels.BannerViewModel>
+@{
+    Layout = "_AdminLayout";
+    var banners = Model?.ToList() ?? new List<ITShop.ViewModels.BannerViewModel>();
+}
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-body">
+            <div class="admin-page-header">
+                <h2 class="admin-page-title">Manage Banners</h2>
+                <a asp-action="AddBanner" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Add Banner
+                </a>
+            </div>
+
+            @if (!banners.Any())
+            {
+                <div class="alert alert-info mb-0">ยังไม่มี Banner ในระบบ</div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Preview</th>
+                                <th>Title</th>
+                                <th>Position</th>
+                                <th>Order</th>
+                                <th>Status</th>
+                                <th>Period</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in banners)
+                            {
+                                <tr>
+                                    <td>
+                                        <img src="@(item.ImageUrl ?? "https://placehold.co/120x60?text=Banner")"
+                                             style="width:120px; height:60px; object-fit:cover;" class="rounded border" />
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold">@(string.IsNullOrWhiteSpace(item.Title) ? "-" : item.Title)
+                                        </div>
+                                    </td>
+                                    <td><span class="badge bg-secondary">@item.Position</span></td>
+                                    <td>@item.DisplayOrder</td>
+                                    <td>
+                                        @if (item.IsActive)
+                                        {
+                                            <span class="badge bg-success">Active</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="small">Start: @(item.StartDate?.ToString("dd/MM/yyyy") ?? "-")</div>
+                                        <div class="small">End: @(item.EndDate?.ToString("dd/MM/yyyy") ?? "-")</div>
+                                    </td>
+                                    <td class="text-end">
+                                        <a asp-action="EditBanner" asp-route-id="@item.BannerId"
+                                           class="btn btn-sm btn-warning">Edit</a>
+                                        <form asp-action="DeleteBanner" method="post" class="d-inline"
+                                              data-confirm-message="ลบ Banner นี้ใช่ไหม?">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@item.BannerId" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>

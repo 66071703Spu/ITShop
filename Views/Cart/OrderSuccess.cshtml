@@ -1,0 +1,32 @@
+@{
+    Layout = "_UserLayout";
+    var orderNumber = TempData["OrderNumber"]?.ToString();
+}
+
+<div class="container py-5">
+    <div class="card border-0 mx-auto" style="max-width: 720px;">
+        <div class="card-body text-center p-5">
+            <div class="mx-auto mb-4 d-inline-flex align-items-center justify-content-center rounded-circle bg-success-subtle text-success"
+                 style="width: 84px; height: 84px; font-size: 2rem;">
+                <i class="bi bi-check2"></i>
+            </div>
+            <div class="user-kicker">Checkout Complete</div>
+            <h2 class="text-success mb-3">Order Completed</h2>
+            <p class="mb-3 text-muted">ชำระเงินเรียบร้อยแล้ว และคำสั่งซื้อถูกบันทึกเข้าสู่ระบบเรียบร้อย</p>
+
+            @if (!string.IsNullOrWhiteSpace(orderNumber))
+            {
+                <div class="user-soft-panel d-inline-block px-4 py-3 mb-3">
+                    <div class="small text-muted mb-1">Order Number</div>
+                    <div class="fw-bold">@orderNumber</div>
+                </div>
+            }
+
+            <div class="d-flex justify-content-center gap-2 mt-4">
+                <a asp-controller="Home" asp-action="Index" class="btn btn-primary">Back to Home</a>
+                <a asp-controller="Order" asp-action="MyOrders" class="btn btn-outline-success">My Orders</a>
+                <a asp-controller="Product" asp-action="Index" class="btn btn-outline-secondary">Shop More</a>
+            </div>
+        </div>
+    </div>
+</div>

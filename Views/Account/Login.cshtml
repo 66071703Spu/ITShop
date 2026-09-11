@@ -1,0 +1,70 @@
+@{
+    Layout = "_AuthLayout";
+}
+
+@model ITShop.ViewModels.LoginViewModel
+
+<div class="auth-shell">
+    <div class="auth-card row g-0">
+        <div class="col-lg-5 d-none d-lg-block">
+            <div class="auth-side d-flex flex-column justify-content-between">
+                <div>
+                    <div class="small text-uppercase fw-bold mb-3">Welcome Back</div>
+                    <h2 class="auth-title mb-3">Sign in to continue shopping.</h2>
+                    <p class="mb-0 opacity-75">ติดตามคำสั่งซื้อ จัดการโปรไฟล์ และใช้งานคูปองของคุณได้ในที่เดียว</p>
+                </div>
+                <div class="small opacity-75">ITShop customer account</div>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="auth-form-wrap">
+                <div class="mb-4">
+                    <div class="text-uppercase small fw-bold text-muted mb-2">Account</div>
+                    <h3 class="mb-1">Login</h3>
+                </div>
+
+                @if (ViewBag.Error != null)
+                {
+                    <div class="alert alert-danger">@ViewBag.Error</div>
+                }
+
+                @if (TempData["Success"] != null)
+                {
+                    <div class="alert alert-success">@TempData["Success"]</div>
+                }
+
+                <form asp-controller="Account" asp-action="Login" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label">Email</label>
+                        <input asp-for="Email" type="email" class="form-control" placeholder="Enter email" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Password" class="form-label">Password</label>
+                        <input asp-for="Password" type="password" class="form-control" placeholder="Enter password" />
+                        <span asp-validation-for="Password" class="text-danger"></span>
+                    </div>
+
+                    <div class="text-end mb-3">
+                        <a asp-controller="Account" asp-action="ForgotPassword" class="text-decoration-none">Forgot
+                            Password?</a>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary auth-action">Login</button>
+                        </div>
+                    </form>
+
+                    <div class="mt-4 text-center user-compact-note">
+                        <a asp-controller="Account" asp-action="Signup" class="text-decoration-none">Don't have an account?
+                            Sign Up</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+

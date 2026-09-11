@@ -1,0 +1,73 @@
+@model IEnumerable<ITShop.ViewModels.AdminViewModel>
+@{
+    Layout = "_SuperAdminLayout";
+}
+
+<div class="container-fluid">
+    <div class="admin-page-header">
+        <h2 class="admin-page-title">Admin Accounts</h2>
+        <a asp-action="AddAdmin" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Add Admin</a>
+    </div>
+
+    @if (TempData["UserSuccess"] != null)
+    {
+        <div class="alert alert-success">@TempData["UserSuccess"]</div>
+    }
+
+    @if (TempData["UserError"] != null)
+    {
+        <div class="alert alert-danger">@TempData["UserError"]</div>
+    }
+
+    <div class="card border-0">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Roles</th>
+                            <th>Status</th>
+                            <th class="text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in Model)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@user.FullName</td>
+                                <td>@user.Email</td>
+                                <td>@user.Phone</td>
+                                <td>
+                                    @foreach (var role in user.Roles)
+                                    {
+                                        var badgeClass = role.ToLower() == "superadmin" ? "bg-danger-subtle text-danger" :
+                               "bg-primary-subtle text-primary";
+                                        <span class="badge @badgeClass me-1">@role</span>
+                                    }
+                                </td>
+                                <td>@(string.IsNullOrWhiteSpace(user.Status) ? "active" : user.Status)</td>
+                                <td class="text-center">
+                                    <div class="d-flex flex-wrap justify-content-center gap-2">
+                                        <a asp-action="AdminProfile" asp-route-id="@user.UserId"
+                                           class="btn btn-sm btn-outline-secondary">View</a>
+                                        <a asp-action="EditAdmin" asp-route-id="@user.UserId"
+                                           class="btn btn-sm btn-primary">Edit</a>
+                                        <form asp-action="DeleteAdmin" method="post" class="d-inline"
+                                              data-confirm-message="Delete this admin account?">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@user.UserId" />
+                                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

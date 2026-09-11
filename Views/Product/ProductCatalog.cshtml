@@ -1,0 +1,239 @@
+@using System.Linq
+@model IEnumerable<ITShop.ViewModels.ProductViewModel>
+@{
+    Layout = "_UserLayout";
+    var products = Model?.ToList() ?? new List<ITShop.ViewModels.ProductViewModel>();
+    var pageTitle = ViewBag.PageTitle as string ?? "All Products";
+    var currentCategory = ViewBag.CurrentCategory as string ?? string.Empty;
+    int? currentBrandId = ViewBag.CurrentBrandId is int brandId ? brandId : null;
+    var search = ViewBag.Search as string ?? string.Empty;
+    var categories = ViewBag.Categories as List<string> ?? new List<string>();
+    var brands = ViewBag.Brands as List<ITShop.Models.Brand> ?? new List<ITShop.Models.Brand>();
+    var showPromotion = ViewBag.ShowPromotion is bool promotion && promotion;
+    var showNewArrival = ViewBag.ShowNewArrival is bool newArrival && newArrival;
+    var showBestSeller = ViewBag.ShowBestSeller is bool bestSeller && bestSeller;
+    var inStockOnly = ViewBag.InStockOnly is bool inStock && inStock;
+    var outOfStockOnly = ViewBag.OutOfStockOnly is bool outOfStock && outOfStock;
+    var priceSort = ViewBag.PriceSort as string ?? string.Empty;
+}
+
+<div class="container py-3">
+    <div class="user-page-header">
+        <h2 class="user-page-title">@pageTitle</h2>
+        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">Back Home</a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-4 col-xl-3">
+            <div class="card sticky-lg-top" style="top: 1rem;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">Filter Products</h5>
+                        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">Clear</a>
+                    </div>
+
+                    <form asp-action="Index" method="get" class="d-grid gap-3">
+                        <div>
+                            <label class="form-label">Search</label>
+                            <input type="text" name="search" value="@search" class="form-control"
+                                   placeholder="ค้นหาชื่อสินค้า / หมวดหมู่ / แบรนด์" />
+                        </div>
+
+                        <div>
+                            <label class="form-label">Category</label>
+                            <select name="category" class="form-select">
+                                <option value="">All Categories</option>
+                                @foreach (var c in categories)
+                                {
+                                    if (string.Equals(c, currentCategory, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <option value="@c" selected>@c</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@c">@c</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="form-label">Brand</label>
+                            <select name="brandId" class="form-select">
+                                <option value="">All Brands</option>
+                                @foreach (var brand in brands)
+                                {
+                                    if (currentBrandId == brand.BrandId)
+                                    {
+                                        <option value="@brand.BrandId" selected>@brand.BrandName</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@brand.BrandId">@brand.BrandName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="form-label d-block">Availability</label>
+                            <div class="user-soft-panel">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="inStockOnly" value="true"
+                                           id="inStockOnly" @(inStockOnly ? "checked" : null) />
+                                    <label class="form-check-label" for="inStockOnly">มีสินค้าใน stock</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="outOfStockOnly" value="true"
+                                           id="outOfStockOnly" @(outOfStockOnly ? "checked" : null) />
+                                    <label class="form-check-label" for="outOfStockOnly">สินค้าหมด stock</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="form-label d-block">Special</label>
+                            <div class="user-soft-panel">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="promotionOnly" value="true"
+                                           id="promotionOnly" @(showPromotion ? "checked" : null) />
+                                    <label class="form-check-label" for="promotionOnly">Promotion</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="newArrivalOnly" value="true"
+                                           id="newArrivalOnly" @(showNewArrival ? "checked" : null) />
+                                    <label class="form-check-label" for="newArrivalOnly">New Arrival (30 days)</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="bestSellerOnly" value="true"
+                                           id="bestSellerOnly" @(showBestSeller ? "checked" : null) />
+                                    <label class="form-check-label" for="bestSellerOnly">Best Seller</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="form-label">Price</label>
+                            <select name="priceSort" class="form-select">
+                                @if (string.Equals(priceSort, "low-high", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <option value="">Default</option>
+                                    <option value="low-high" selected>Low to High</option>
+                                    <option value="high-low">High to Low</option>
+                                }
+                                else if (string.Equals(priceSort, "high-low", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <option value="">Default</option>
+                                    <option value="low-high">Low to High</option>
+                                    <option value="high-low" selected>High to Low</option>
+                                }
+                                else
+                                {
+                                    <option value="" selected>Default</option>
+                                    <option value="low-high">Low to High</option>
+                                    <option value="high-low">High to Low</option>
+                                }
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8 col-xl-9">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <p class="text-muted mb-0">Found @products.Count product(s)</p>
+                <div class="d-flex flex-wrap gap-2">
+                    @if (showPromotion)
+                    {
+                        <span class="badge text-bg-warning">Promotion</span>
+                    }
+                    @if (showNewArrival)
+                    {
+                        <span class="badge text-bg-info">New Arrival</span>
+                    }
+                    @if (showBestSeller)
+                    {
+                        <span class="badge text-bg-success">Best Seller</span>
+                    }
+                    @if (inStockOnly)
+                    {
+                        <span class="badge text-bg-primary">In Stock</span>
+                    }
+                    @if (outOfStockOnly)
+                    {
+                        <span class="badge text-bg-secondary">Out of Stock</span>
+                    }
+                </div>
+            </div>
+
+            @if (!products.Any())
+            {
+                <div class="alert alert-info">ไม่พบสินค้าที่ตรงกับเงื่อนไขที่เลือก</div>
+            }
+            else
+            {
+                <div class="row g-3">
+                    @foreach (var item in products)
+                    {
+                        <div class="col-6 col-md-6 col-xl-4">
+                            <div class="card user-product-card h-100 border-0">
+                                <img src="@(item.ImageUrl ?? item.Images?.FirstOrDefault() ?? "https://placehold.co/300x300?text=No+Image")"
+                                     class="card-img-top p-3 user-media-thumb" style="height:180px; object-fit:contain;" />
+
+                                <div class="card-body d-flex flex-column py-3">
+                                    <div class="d-flex flex-wrap gap-2 mb-2">
+                                        <span class="badge bg-light text-dark">@(item.CategoryName ?? "ทั่วไป")</span>
+                                        <span
+                                            class="badge @(((item.Stock ?? 0) > 0) ? "text-bg-success" : "text-bg-secondary")">
+                                            @(((item.Stock ?? 0) > 0) ? "In Stock" : "Out of Stock")
+                                        </span>
+                                        @if (item.IsPackageProduct && item.PackageItemCount > 0)
+                                        {
+                                            <span class="badge text-bg-info">@item.PackageItemCount ชิ้นในเซต</span>
+                                        }
+                                    </div>
+                                    <h6 class="card-title mb-1">@item.Name</h6>
+                                    @if (!string.IsNullOrWhiteSpace(item.BrandName))
+                                    {
+                                        <p class="text-muted small mb-1">Brand: @item.BrandName</p>
+                                    }
+                                    <p class="text-muted small mb-2">Stock: @(item.Stock ?? 0)</p>
+                                    @if (item.HasAutoAppliedPromotion)
+                                    {
+                                        <div class="mb-3">
+                                            <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                                <span class="fw-bold text-danger">@item.Price.ToString("N2") บาท</span>
+                                                <span
+                                                    class="text-muted text-decoration-line-through small">@item.OriginalPrice.ToString("N2")
+                                                    บาท</span>
+                                                    @if (!string.IsNullOrWhiteSpace(item.DiscountLabel))
+                                                    {
+                                                        <span class="badge text-bg-danger">@item.DiscountLabel</span>
+                                                    }
+                                                </div>
+                                                @if (!string.IsNullOrWhiteSpace(item.ActivePromotionName))
+                                                {
+                                                    <div class="small text-success">Promo: @item.ActivePromotionName</div>
+                                                }
+                                            </div>
+                                        }
+                                    else
+                                        {
+                                            <p class="fw-bold text-danger mb-3">@item.Price.ToString("N2") บาท</p>
+                                        }
+
+                                        <a asp-action="ProductDetail" asp-route-id="@item.ProductId"
+                                               class="btn btn-warning btn-sm mt-auto">
+                                            View Detail
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>

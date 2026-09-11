@@ -1,0 +1,57 @@
+@{
+    Layout = "_AdminLayout";
+}
+@model ITShop.ViewModels.AdminUserFormViewModel
+
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 90vh;">
+    <div class="card shadow" style="width: 100%; max-width: 500px; border-top:4px solid #1e1e2f;">
+        <div class="card-body">
+
+            <h3 class="text-center mb-4" style="color:#1e1e2f;">Edit Customer</h3>
+
+            <form asp-action="Edituser" method="post">
+                @Html.AntiForgeryToken()
+                <input asp-for="UserId" type="hidden" />
+
+                <div class="mb-3">
+                    <label>First Name</label>
+                    <input asp-for="FirstName" class="form-control" />
+                </div>
+
+                <div class="mb-3">
+                    <label>Last Name</label>
+                    <input asp-for="LastName" class="form-control" />
+                </div>
+
+                <div class="mb-3">
+                    <label>Email</label>
+                    <input asp-for="Email" class="form-control" />
+                </div>
+
+                <div class="mb-3">
+                    <label>Phone</label>
+                    <input asp-for="PhoneNumber" class="form-control" />
+                </div>
+
+                <div class="mb-3">
+                    <label>Status</label>
+                    <select asp-for="Status" class="form-select">
+                        <option value="active">active</option>
+                        <option value="inactive">inactive</option>
+                    </select>
+                </div>
+
+                <input asp-for="SelectedRoleId" type="hidden" />
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn" style="background:#1e1e2f;color:white;">
+                        Update
+                    </button>
+                    <a asp-action="Userlist" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>

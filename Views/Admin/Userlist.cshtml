@@ -1,0 +1,91 @@
+@{
+    Layout = "_AdminLayout";
+}
+
+@model IEnumerable<ITShop.ViewModels.AdminViewModel>
+
+<div class="container mt-4">
+    <h2 style="color:#1e1e2f;">Customer List</h2>
+
+    @if (TempData["UserSuccess"] != null)
+    {
+        <div class="alert alert-success">@TempData["UserSuccess"]</div>
+    }
+
+    @if (TempData["UserError"] != null)
+    {
+        <div class="alert alert-danger">@TempData["UserError"]</div>
+    }
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger">@ViewBag.Error</div>
+    }
+
+    <div class="d-flex justify-content-end mb-3">
+        <a asp-action="Adduser" class="btn" style="background:#1e1e2f;color:white;">
+            + Add Customer
+        </a>
+    </div>
+
+    <table class="table table-bordered">
+        <thead style="background:#FFE5D0;">
+            <tr>
+                <th>Username</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Roles</th>
+                <th>Status</th>
+                <th class="text-center">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var u in Model)
+            {
+                <tr>
+                    <td>@u.Username</td>
+                    <td>@u.FullName</td>
+                    <td>@u.Email</td>
+                    <td>@u.Phone</td>
+                    <td>
+                        @if (u.Roles.Any())
+                        {
+                            foreach (var role in u.Roles)
+                            {
+                                var badgeClass = role.ToLower() switch
+                                {
+                                    "superadmin" => "bg-danger-subtle text-danger",
+                                    "admin" => "bg-primary-subtle text-primary",
+                                    _ => "bg-secondary-subtle text-secondary"
+                                };
+                                <span class="badge @badgeClass me-1">@role</span>
+                            }
+                        }
+                        else
+                        {
+                            <span class="text-muted">-</span>
+                        }
+                    </td>
+                    <td>@(string.IsNullOrWhiteSpace(u.Status) ? "active" : u.Status)</td>
+                    <td class="text-center">
+                        <a asp-action="CustomerProfile" asp-route-id="@u.UserId" class="btn btn-sm btn-outline-secondary">
+                            View
+                        </a>
+                        <a asp-action="Edituser" asp-route-id="@u.UserId" class="btn btn-sm btn-primary">
+                            Edit
+                        </a>
+                        <form asp-action="Deleteuser" method="post" class="d-inline"
+                              data-confirm-message="ลบผู้ใช้นี้ใช่ไหม?">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@u.UserId" />
+                            <button type="submit" class="btn btn-sm btn-danger">
+                                Delete
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

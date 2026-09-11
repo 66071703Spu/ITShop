@@ -1,0 +1,79 @@
+@model IEnumerable<ITShop.ViewModels.AdminOrderViewModel>
+@{
+    Layout = "_AdminLayout";
+}
+
+<div class="container-fluid">
+    <div class="admin-page-header">
+        <h2 class="admin-page-title">Order List</h2>
+    </div>
+
+    @if (TempData["OrderSuccess"] != null)
+    {
+        <div class="alert alert-success">@TempData["OrderSuccess"]</div>
+    }
+
+    @if (TempData["OrderError"] != null)
+    {
+        <div class="alert alert-danger">@TempData["OrderError"]</div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">ยังไม่มีรายการสั่งซื้อในระบบ</div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Order No.</th>
+                                <th>Customer</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Payment Method</th>
+                                <th>Payment Status</th>
+                                <th>Shipping</th>
+                                <th>Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var order in Model)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@order.OrderNumber</td>
+                                    <td>@order.CustomerName</td>
+                                    <td>@order.TotalAmount.ToString("N2") บาท</td>
+                                    <td>@order.Status</td>
+                                    <td>@order.PaymentMethod</td>
+                                    <td>@order.PaymentStatus</td>
+                                    <td>
+                                        <div class="fw-semibold">@order.ShippingProvider</div>
+                                        <div class="small text-muted">Tracking: @(string.IsNullOrWhiteSpace(order.TrackingNumber) ? "-" : order.TrackingNumber)</div>
+                                        <div class="small text-muted">Status: @order.ShippingStatus</div>
+                                        <div class="small text-muted">@order.ShippingAddress</div>
+                                    </td>
+                                    <td>@order.CreatedAt?.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>
+                                        @if (order.HasShipment)
+                                        {
+                                            <a asp-action="EditShipment" asp-route-orderId="@order.OrderId" class="btn btn-sm btn-outline-primary">Update Shipment</a>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" disabled>No Shipment</button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+</div>

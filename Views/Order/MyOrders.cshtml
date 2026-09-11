@@ -1,0 +1,70 @@
+@model IEnumerable<ITShop.ViewModels.OrderViewModel>
+@{
+    Layout = "_UserLayout";
+}
+
+<div class="container py-3">
+    <div class="user-page-header">
+        <h2 class="user-page-title">My Orders</h2>
+        <a asp-controller="Product" asp-action="Index" class="btn btn-outline-secondary">Shop More</a>
+    </div>
+
+    @if (TempData["OrderSuccess"] != null)
+    {
+        <div class="alert alert-success">@TempData["OrderSuccess"]</div>
+    }
+
+    @if (TempData["OrderError"] != null)
+    {
+        <div class="alert alert-danger">@TempData["OrderError"]</div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">ยังไม่มีรายการสั่งซื้อ</div>
+    }
+    else
+    {
+        <div class="card border-0">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Order No.</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Payment</th>
+                                <th>Total</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var order in Model)
+                            {
+                                <tr>
+                                    <td>@order.OrderNumber</td>
+                                    <td>@order.CreatedAt?.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>@order.Status</td>
+                                    <td>
+                                        <div>@order.PaymentMethod (@order.PaymentStatus)</div>
+                                        @if (!string.IsNullOrWhiteSpace(order.BrandSummary))
+                                        {
+                                            <div class="small text-muted">Brand: @order.BrandSummary</div>
+                                        }
+                                    </td>
+                                    <td>@order.FinalAmount.ToString("N2") บาท</td>
+                                    <td>
+                                        <a asp-action="OrderDetail" asp-route-id="@order.OrderId"
+                                               class="btn btn-sm btn-primary">View
+                                            Detail</a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>

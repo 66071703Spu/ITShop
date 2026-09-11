@@ -1,0 +1,460 @@
+@model ITShop.ViewModels.ProfileDashboardViewModel
+@{
+    Layout = "_UserLayout";
+
+    string GetStatusBadgeClass(string? status)
+    {
+        return (status ?? string.Empty).ToLower() switch
+        {
+            "delivered" => "bg-success-subtle text-success",
+            "shipped" => "bg-success-subtle text-success",
+            "paid" => "bg-primary-subtle text-primary",
+            "packed" => "bg-info-subtle text-info",
+            "processing" => "bg-warning-subtle text-warning",
+            "pending" => "bg-warning-subtle text-warning",
+            "cancelled" => "bg-danger-subtle text-danger",
+            _ => "bg-secondary-subtle text-secondary"
+        };
+    }
+}
+
+<style>
+    .profile-nav-card {
+        overflow: hidden;
+    }
+
+    .profile-nav-card .list-group-item {
+        border: 0;
+        border-bottom: 1px solid #f0ece6;
+        padding: 0.95rem 1.15rem;
+        font-weight: 600;
+        color: #2b3140;
+        background: transparent;
+    }
+
+    .profile-nav-card .list-group-item:last-child {
+        border-bottom: 0;
+    }
+
+    .profile-nav-card .list-group-item.active {
+        background: linear-gradient(135deg, #ff7f50 0%, #ff996d 100%);
+        color: #fff;
+    }
+
+    .profile-table-shell {
+        border: 1px solid #ebe4db;
+        border-radius: 22px;
+        overflow: hidden;
+        background: rgba(255,255,255,0.86);
+    }
+
+    .profile-table-shell .table {
+        margin-bottom: 0;
+    }
+
+    .profile-table-shell .table thead th {
+        background: #fbf7f2;
+        border-bottom-width: 1px;
+    }
+
+    .profile-table-shell .table > :not(caption) > * > * {
+        padding: 1rem;
+        border-color: #efe8df;
+    }
+
+    .profile-table-shell .table tbody tr:hover {
+        background: #fff9f5;
+    }
+
+    .profile-order-summary {
+        max-width: 15rem;
+    }
+
+    .profile-sidebar-meta {
+        border-top: 1px solid #f0ece6;
+        padding-top: 1rem;
+        margin-top: 1rem;
+    }
+</style>
+
+<div class="container py-4">
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <div class="row g-4">
+        <div class="col-lg-3">
+            <div class="card border-0">
+                <div class="card-body text-center p-4">
+                    <div class="rounded-circle bg-primary-subtle text-primary d-inline-flex align-items-center justify-content-center fw-bold mb-3" style="width: 88px; height: 88px; font-size: 1.75rem;">
+                        @Model.AvatarInitials
+                    </div>
+                    <h1 class="h5 mb-1">@Model.Profile.FirstName @Model.Profile.LastName</h1>
+                    <p class="text-muted small mb-2">@Model.Profile.Email</p>
+                    <span class="badge bg-light text-dark text-uppercase">@(string.IsNullOrWhiteSpace(Model.Profile.Status) ? "active" : Model.Profile.Status)</span>
+                </div>
+            </div>
+
+            <div class="card border-0 mt-3 profile-nav-card">
+                <div class="list-group list-group-flush">
+                    <a asp-controller="Account" asp-action="Profile" class="list-group-item list-group-item-action active">Dashboard</a>
+                    <a asp-controller="Account" asp-action="EditProfile" class="list-group-item list-group-item-action">Edit Profile</a>
+                    <a asp-controller="Order" asp-action="MyOrders" class="list-group-item list-group-item-action">My Orders</a>
+                    <a asp-controller="Account" asp-action="ManageAddresses" class="list-group-item list-group-item-action">Shipping Address</a>
+                    <a asp-controller="Account" asp-action="ChangePassword" class="list-group-item list-group-item-action">Change Password</a>
+                    <a asp-controller="Cart" asp-action="Cart" class="list-group-item list-group-item-action">My Cart</a>
+                </div>
+                <div class="card-body pt-0 pb-3 px-3">
+                    <div class="profile-sidebar-meta">
+                        <div class="small text-muted mb-2">Account email</div>
+                        <div class="fw-semibold small mb-3 text-break">@Model.Profile.Email</div>
+                        <a asp-controller="Account" asp-action="Logout" class="small text-decoration-none text-muted">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-9">
+            <div class="card border-0 mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
+                        <div>
+                            <p class="user-kicker mb-2">Account Overview</p>
+                            <h2 class="h4 mb-2">Welcome back, @Model.Profile.FirstName</h2>
+                            <p class="text-muted mb-0">Member since @Model.Profile.CreatedAt?.ToString("dd MMM yyyy")</p>
+                        </div>
+                        <div class="text-lg-end">
+                            <p class="text-muted small mb-1">Default Address</p>
+                            <div class="fw-semibold">@Model.DefaultAddressPreview</div>
+                            <a asp-controller="Account" asp-action="ManageAddresses" class="small text-decoration-none">Manage Addresses</a>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-3 col-6">
+                            <div class="user-soft-panel h-100">
+                                <div class="text-muted small">Total Orders</div>
+                                <div class="fs-4 fw-bold">@Model.TotalOrders</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="user-soft-panel h-100">
+                                <div class="text-muted small">Active Orders</div>
+                                <div class="fs-4 fw-bold">@Model.ActiveOrders</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="user-soft-panel h-100">
+                                <div class="text-muted small">Saved Addresses</div>
+                                <div class="fs-4 fw-bold">@Model.AddressCount</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="user-soft-panel h-100">
+                                <div class="text-muted small">Lifetime Spend</div>
+                                <div class="fs-5 fw-bold">@Model.LifetimeSpent.ToString("N2") บาท</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3 class="h4 mb-0">My Invite Code</h3>
+                        <span class="text-muted small">1 user = 1 invite code ถาวร</span>
+                    </div>
+
+                    <div class="user-section-card mb-4">
+                        <div class="row g-3 align-items-stretch">
+                            <div class="col-md-4">
+                                <div class="user-soft-panel h-100">
+                                    <div class="small text-muted mb-2">Invite Code</div>
+                                    <div class="fs-5 fw-bold font-monospace text-primary mb-3">@Model.InviteOverview.InviteCode</div>
+                                    <button type="button" class="btn btn-sm btn-outline-primary w-100 js-copy-text" data-copy-text="@Model.InviteOverview.InviteCode">Copy Code</button>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="user-soft-panel h-100">
+                                    <div class="small text-muted mb-2">Invite Link</div>
+                                    <div class="small font-monospace text-break mb-3">@Model.InviteOverview.InviteLink</div>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary js-copy-text" data-copy-text="@Model.InviteOverview.InviteLink">Copy Link</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mt-1">
+                            <div class="col-md-5">
+                                <div class="small text-muted">Current Reward Program</div>
+                                <div class="fw-semibold">@Model.InviteOverview.PromotionName</div>
+                                <div class="small text-success">Reward: @Model.InviteOverview.RewardLabel</div>
+                            </div>
+                            <div class="col-md-7">
+                                <div class="small text-muted">Usage</div>
+                                <div class="small">@Model.InviteOverview.ApplicableProductSummary</div>
+                                @if (Model.InviteOverview.MinimumOrderSubtotal.HasValue)
+                                {
+                                    <div class="small text-muted">reward coupon ใช้ได้เมื่อยอดถึง @Model.InviteOverview.MinimumOrderSubtotal.Value.ToString("N2") บาท</div>
+                                }
+                                @if (!Model.InviteOverview.IsRewardActive)
+                                {
+                                    <div class="small text-warning mt-1">ตอนนี้ยังไม่มี invite promotion ที่เปิดใช้งาน แต่โค้ดนี้ยังคงเป็นโค้ดประจำตัวของคุณ</div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="h5 mb-0">Referral History</h4>
+                        <span class="text-muted small">ทุกคนที่สมัครผ่านโค้ดนี้จะมาแสดงที่นี่</span>
+                    </div>
+
+                    @if (!Model.ReferralHistory.Any())
+                    {
+                        <div class="alert alert-light border mb-0">ยังไม่มีคนสมัครผ่านโค้ดของคุณ</div>
+                    }
+                    else
+                    {
+                        <div class="row g-3">
+                            @foreach (var invite in Model.ReferralHistory)
+                            {
+                                <div class="col-12">
+                                    <div class="user-soft-panel h-100">
+                                        <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-3">
+                                            <div>
+                                                <div class="fw-semibold">@(string.IsNullOrWhiteSpace(invite.InvitedEmail) ? "Unknown referral" : invite.InvitedEmail)</div>
+                                                <div class="small text-muted">สมัครเมื่อ @invite.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                                            </div>
+                                            <div>
+                                                <span class="badge bg-light text-dark text-uppercase">@invite.Status</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="row g-3 mt-1">
+                                            <div class="col-md-4">
+                                                <div class="small text-muted">Invite Code</div>
+                                                <div class="fw-semibold font-monospace">@invite.InviteCode</div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="small text-muted">Promotion</div>
+                                                <div class="fw-semibold">@invite.PromotionName</div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="small text-muted">Reward</div>
+                                                @if (!string.IsNullOrWhiteSpace(invite.RewardCouponCode))
+                                                {
+                                                    <div class="fw-semibold">@invite.RewardCouponCode</div>
+                                                    <div class="small text-muted">ได้รับเมื่อ @invite.RewardedAt?.ToString("dd/MM/yyyy HH:mm")</div>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">รอ order แรก</span>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="card border-0 mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3 class="h4 mb-0">Available Coupons</h3>
+                        <a asp-controller="Cart" asp-action="Cart" class="btn btn-sm btn-outline-secondary">Use in Cart</a>
+                    </div>
+
+                    @if (!Model.AvailableCoupons.Any())
+                    {
+                        <div class="alert alert-light border mb-0">ตอนนี้ยังไม่มีคูปองที่พร้อมใช้งานสำหรับบัญชีนี้</div>
+                    }
+                    else
+                    {
+                        <div class="row g-3">
+                            @foreach (var coupon in Model.AvailableCoupons.Take(6))
+                            {
+                                <div class="col-md-6">
+                                    <div class="user-soft-panel h-100">
+                                        <div class="d-flex justify-content-between gap-2 align-items-start mb-2">
+                                            <div>
+                                                <div class="fw-semibold">@coupon.Code</div>
+                                                <div class="small text-muted">@coupon.PromotionName</div>
+                                            </div>
+                                            <span class="badge text-bg-success">@coupon.DiscountLabel</span>
+                                        </div>
+                                        <div class="small text-muted">@coupon.ApplicableProductSummary</div>
+                                        @if (coupon.MinimumOrderSubtotal.HasValue)
+                                        {
+                                            <div class="small text-muted">ขั้นต่ำ @coupon.MinimumOrderSubtotal.Value.ToString("N2") บาท</div>
+                                        }
+                                        <div class="small text-muted">คงเหลือ @(coupon.RemainingUses?.ToString() ?? "ไม่จำกัด") สิทธิ์</div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="card border-0 mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3 class="h4 mb-0">Coupon History</h3>
+                        <span class="text-muted small">รายการคูปองที่ใช้ไปแล้ว</span>
+                    </div>
+
+                    @if (!Model.CouponHistory.Any())
+                    {
+                        <div class="alert alert-light border mb-0">ยังไม่มีประวัติการใช้คูปอง</div>
+                    }
+                    else
+                    {
+                        <div class="profile-table-shell table-responsive">
+                            <table class="table align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Code</th>
+                                        <th>Promotion</th>
+                                        <th>Used At</th>
+                                        <th>Order</th>
+                                        <th class="text-end">Order Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.CouponHistory)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="fw-semibold">@item.Code</div>
+                                                <div class="small text-muted">@item.DiscountLabel</div>
+                                            </td>
+                                            <td>
+                                                <div class="fw-semibold">@item.PromotionName</div>
+                                            </td>
+                                            <td>
+                                                <div>@item.UsedAt?.ToString("dd/MM/yyyy HH:mm")</div>
+                                            </td>
+                                            <td>
+                                                <div class="fw-semibold">@item.OrderNumber</div>
+                                            </td>
+                                            <td class="text-end">@item.OrderFinalAmount.ToString("N2") บาท</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="card border-0">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3 class="h4 mb-0">Recent Orders</h3>
+                        <a asp-controller="Order" asp-action="MyOrders" class="btn btn-sm btn-outline-secondary">See More</a>
+                    </div>
+
+                    @if (!Model.RecentOrders.Any())
+                    {
+                        <div class="alert alert-info mb-0">ยังไม่มีรายการสั่งซื้อ</div>
+                    }
+                    else
+                    {
+                        <div class="profile-table-shell table-responsive">
+                            <table class="table align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 88px;">Item</th>
+                                        <th>Order No.</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th>Total</th>
+                                        <th class="text-end">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var order in Model.RecentOrders)
+                                    {
+                                        <tr>
+                                            <td>
+                                                @if (!string.IsNullOrWhiteSpace(order.ThumbnailUrl))
+                                                {
+                                                    <img src="@order.ThumbnailUrl" alt="@order.ItemSummary" class="user-media-thumb" style="width: 60px; height: 60px; object-fit: cover;">
+                                                }
+                                                else
+                                                {
+                                                    <div class="user-media-thumb d-flex align-items-center justify-content-center bg-light text-muted small" style="width: 60px; height: 60px;">N/A</div>
+                                                }
+                                            </td>
+                                            <td class="fw-semibold">@order.OrderNumber</td>
+                                            <td class="profile-order-summary">
+                                                <div>@order.CreatedAt?.ToString("dd/MM/yyyy HH:mm")</div>
+                                                <div class="small text-muted">@order.ItemSummary</div>
+                                            </td>
+                                            <td>
+                                                <span class="badge @GetStatusBadgeClass(order.Status)">@order.Status</span>
+                                            </td>
+                                            <td>@order.FinalAmount.ToString("N2") บาท</td>
+                                            <td class="text-end">
+                                                <a asp-controller="Order" asp-action="OrderDetail" asp-route-id="@order.OrderId" class="btn btn-sm btn-outline-primary">Open</a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('click', async function (event) {
+            const button = event.target.closest('.js-copy-text');
+            if (!button) {
+                return;
+            }
+
+            const text = button.getAttribute('data-copy-text');
+            if (!text) {
+                return;
+            }
+
+            const originalText = button.textContent;
+
+            try {
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(text);
+                } else {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = text;
+                    textarea.setAttribute('readonly', 'readonly');
+                    textarea.style.position = 'absolute';
+                    textarea.style.left = '-9999px';
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                }
+
+                button.textContent = 'Copied';
+                setTimeout(function () {
+                    button.textContent = originalText;
+                }, 1600);
+            } catch {
+                button.textContent = 'Copy Failed';
+                setTimeout(function () {
+                    button.textContent = originalText;
+                }, 1600);
+            }
+        });
+    </script>
+}
