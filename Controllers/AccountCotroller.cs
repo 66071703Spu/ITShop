@@ -4,16 +4,22 @@ using ITShop.Helpers;
 using ITShop.Models;
 using ITShop.ViewModels;
 using System.Linq;
+using System.Security.Cryptography;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace ITShop.Controllers;
 
 public class AccountController : Controller
 {
     private readonly Csi402dbContext _db;
+    private readonly PasswordResetEmailSender _emailSender;
+    private readonly ILogger<AccountController> _logger;
 
-    public AccountController(Csi402dbContext db)
+    public AccountController(Csi402dbContext db, PasswordResetEmailSender emailSender, ILogger<AccountController> logger)
     {
         _db = db;
+        _emailSender = emailSender;
+        _logger = logger;
     }
 
     // 🔹 หน้าเข้าสู่ระบบ
@@ -35,13 +41,19 @@ public class AccountController : Controller
             return View(data);
         }
 
-        var user = _db.Users
-            .FirstOrDefault(u => u.Email == data.Email && u.PasswordHash == data.Password);
+        var user = _db.Users.FirstOrDefault(u => u.Email == data.Email.Trim());
 
-        if (user == null)
+        if (user == null || !UserPasswordService.Verify(user, data.Password)
+            || string.Equals(user.Status, "inactive", StringComparison.OrdinalIgnoreCase))
         {
             ViewBag.Error = "Email หรือ Password ไม่ถูกต้อง";
             return View(data);
+        }
+
+        if (!UserPasswordService.IsHashed(user.PasswordHash))
+        {
+            user.PasswordHash = UserPasswordService.Hash(user, data.Password);
+            _db.SaveChanges();
         }
 
         // เก็บ session แบบง่าย ๆ
@@ -92,6 +104,7 @@ public class AccountController : Controller
     public IActionResult Register(SignupViewModel data)
     {
         data.InviteCode = InvitePromotionHelper.NormalizeInviteCode(data.InviteCode);
+        data.Email = data.Email?.Trim() ?? string.Empty;
 
         if (string.IsNullOrWhiteSpace(data.FirstName) ||
             string.IsNullOrWhiteSpace(data.Email) ||
@@ -102,7 +115,7 @@ public class AccountController : Controller
             return View("Signup", data);
         }
 
-        var checkEmail = _db.Users.FirstOrDefault(u => u.Email == data.Email);
+        var checkEmail = _db.Users.FirstOrDefault(u => u.Email.ToLower() == data.Email.ToLower());
         if (checkEmail != null)
         {
             PopulateInviteSignupContext(data);
@@ -126,12 +139,14 @@ public class AccountController : Controller
         {
             FirstName = data.FirstName.Trim(),
             LastName = string.IsNullOrWhiteSpace(data.LastName) ? "-" : data.LastName.Trim(),
-            Email = data.Email.Trim(),
-            PasswordHash = data.PasswordHash, // โปรเจกต์นี้เก็บแบบง่ายก่อน
+            Email = data.Email,
+            PasswordHash = string.Empty,
             PhoneNumber = data.PhoneNumber,
             Status = "active",
             CreatedAt = DateTime.Now
         };
+
+        user.PasswordHash = UserPasswordService.Hash(user, data.PasswordHash);
 
         _db.Users.Add(user);
         _db.SaveChanges();
@@ -527,7 +542,7 @@ public class AccountController : Controller
             return View(data);
         }
 
-        if (user.PasswordHash != data.CurrentPassword)
+        if (!UserPasswordService.Verify(user, data.CurrentPassword))
         {
             ModelState.AddModelError(nameof(data.CurrentPassword), "รหัสผ่านปัจจุบันไม่ถูกต้อง");
             return View(data);
@@ -539,53 +554,148 @@ public class AccountController : Controller
             return View(data);
         }
 
-        user.PasswordHash = data.NewPassword;
+        user.PasswordHash = UserPasswordService.Hash(user, data.NewPassword);
         _db.SaveChanges();
 
         TempData["Success"] = "เปลี่ยนรหัสผ่านเรียบร้อยแล้ว";
         return RedirectToAction("Profile");
     }
 
-    // 🔹 หน้าลืมรหัสผ่าน
-    // เปิดหน้าตั้งรหัสผ่านใหม่แบบง่าย
+    // ขอส่งลิงก์รีเซ็ตรหัสผ่านไปยังอีเมลของบัญชี
     public IActionResult ForgotPassword()
     {
         return View();
     }
 
-    // 🔹 ตั้งรหัสผ่านใหม่แบบง่ายในระบบ
     [HttpPost]
     [ValidateAntiForgeryToken]
-    // ตั้งรหัสผ่านใหม่จากอีเมลหลังตรวจข้อมูลรหัสผ่านใหม่
     public IActionResult ForgotPassword(ForgotPasswordViewModel data)
     {
-        if (string.IsNullOrWhiteSpace(data.Email) ||
-            string.IsNullOrWhiteSpace(data.NewPassword) ||
-            string.IsNullOrWhiteSpace(data.ConfirmPassword))
+        if (!ModelState.IsValid)
         {
-            ViewBag.Error = "กรุณากรอกข้อมูลให้ครบ";
+            return View(data);
+        }
+
+        if (!_emailSender.IsConfigured)
+        {
+            ViewBag.Error = "ระบบส่งอีเมลยังไม่พร้อมใช้งาน กรุณาติดต่อผู้ดูแลระบบ";
+            return View(data);
+        }
+
+        var email = data.Email.Trim();
+        var user = _db.Users.FirstOrDefault(u => u.Email == email);
+        if (user != null)
+        {
+            var now = DateTime.UtcNow;
+            var recentlyRequested = _db.PasswordResets.Any(reset =>
+                reset.Email == email && reset.CreatedAt > now.AddMinutes(-2));
+            if (!recentlyRequested)
+            {
+                var token = WebEncoders.Base64UrlEncode(RandomNumberGenerator.GetBytes(32));
+                var reset = new PasswordReset
+                {
+                    Email = email,
+                    TokenHash = HashResetToken(token),
+                    CreatedAt = now,
+                    ExpiresAt = now.AddMinutes(30)
+                };
+                _db.PasswordResets.Add(reset);
+                _db.SaveChanges();
+
+                try
+                {
+                    _emailSender.Send(email, _emailSender.CreateResetUrl(token));
+                }
+                catch (Exception exception)
+                {
+                    _db.PasswordResets.Remove(reset);
+                    _db.SaveChanges();
+                    _logger.LogError(exception, "Could not send a password reset email.");
+                    ViewBag.Error = "ส่งอีเมลไม่สำเร็จ กรุณาลองใหม่ภายหลัง";
+                    return View(data);
+                }
+            }
+        }
+
+        ViewBag.Success = "หากอีเมลนี้มีบัญชีในระบบ เราได้ส่งลิงก์ตั้งรหัสผ่านใหม่แล้ว";
+        return View(new ForgotPasswordViewModel());
+    }
+
+    [HttpGet]
+    public IActionResult ResetPassword(string? token)
+    {
+        if (string.IsNullOrWhiteSpace(token) || FindValidReset(token) == null)
+        {
+            return View("ResetPasswordInvalid");
+        }
+
+        return View(new ResetPasswordViewModel { Token = token });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult ResetPassword(ResetPasswordViewModel data)
+    {
+        if (!ModelState.IsValid)
+        {
             return View(data);
         }
 
         if (data.NewPassword != data.ConfirmPassword)
         {
-            ViewBag.Error = "ยืนยันรหัสผ่านไม่ตรงกัน";
+            ModelState.AddModelError(nameof(data.ConfirmPassword), "ยืนยันรหัสผ่านใหม่ไม่ตรงกัน");
             return View(data);
         }
 
-        var user = _db.Users.FirstOrDefault(u => u.Email == data.Email);
+        using var transaction = _db.Database.BeginTransaction();
+        var reset = FindValidReset(data.Token);
+        if (reset == null)
+        {
+            return View("ResetPasswordInvalid");
+        }
+
+        var updated = _db.Database.ExecuteSqlInterpolated($@"
+            UPDATE password_resets SET used_at = {DateTime.UtcNow}
+            WHERE reset_id = {reset.ResetId} AND used_at IS NULL AND expires_at > {DateTime.UtcNow};");
+        if (updated != 1)
+        {
+            transaction.Rollback();
+            return View("ResetPasswordInvalid");
+        }
+
+        var user = _db.Users.FirstOrDefault(account => account.Email == reset.Email);
         if (user == null)
         {
-            ViewBag.Error = "ไม่พบบัญชีผู้ใช้นี้";
-            return View(data);
+            transaction.Rollback();
+            return View("ResetPasswordInvalid");
         }
 
-        user.PasswordHash = data.NewPassword;
+        user.PasswordHash = UserPasswordService.Hash(user, data.NewPassword);
+        _db.PasswordResets
+            .Where(other => other.Email == reset.Email && other.UsedAt == null)
+            .ExecuteUpdate(setters => setters.SetProperty(other => other.UsedAt, DateTime.UtcNow));
         _db.SaveChanges();
+        transaction.Commit();
 
-        TempData["Success"] = "รีเซ็ตรหัสผ่านเรียบร้อยแล้ว";
-        return RedirectToAction("Login");
+        HttpContext.Session.Clear();
+        TempData["Success"] = "ตั้งรหัสผ่านใหม่เรียบร้อยแล้ว กรุณาเข้าสู่ระบบ";
+        return RedirectToAction(nameof(Login));
     }
+
+    private PasswordReset? FindValidReset(string token)
+    {
+        if (token.Length > 128)
+        {
+            return null;
+        }
+
+        var hash = HashResetToken(token);
+        return _db.PasswordResets.FirstOrDefault(reset =>
+            reset.TokenHash == hash && reset.UsedAt == null && reset.ExpiresAt > DateTime.UtcNow);
+    }
+
+    private static string HashResetToken(string token) =>
+        Convert.ToHexString(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(token)));
 
     // 🔹 ออกจากระบบ
     // ล้าง session และออกจากระบบของผู้ใช้ปัจจุบัน
@@ -599,59 +709,6 @@ public class AccountController : Controller
     // ส่งต่อไปยังหน้ารายชื่อลูกค้าที่ดูแลโดย AdminController
     public IActionResult Userlist()
     {
-        return RedirectToAction("Userlist", "Admin");
-    }
-
-    // 🔹 ลบผู้ใช้
-    // ลบบัญชีผู้ใช้จากฝั่งแอดมินเมื่อบัญชีนั้นยังไม่มีประวัติคำสั่งซื้อ
-    public IActionResult Delete(string email)
-    {
-        var user = _db.Users
-            .Include(u => u.Addresses)
-            .Include(u => u.AuditLogs)
-            .Include(u => u.Carts)
-                .ThenInclude(c => c.CartItems)
-            .Include(u => u.CouponRedemptions)
-            .Include(u => u.Orders)
-            .Include(u => u.UserInviteInvitedUsers)
-            .Include(u => u.UserInviteInviterUsers)
-            .Include(u => u.UserRoles)
-            .FirstOrDefault(u => u.Email == email);
-
-        if (user == null)
-        {
-            TempData["UserError"] = "ไม่พบผู้ใช้ที่ต้องการลบ";
-            return RedirectToAction("Userlist", "Admin");
-        }
-
-        if (user.Orders.Any())
-        {
-            TempData["UserError"] = $"ไม่สามารถลบผู้ใช้ {user.Email} ได้ เพราะมีประวัติคำสั่งซื้อแล้ว";
-            return RedirectToAction("Userlist", "Admin");
-        }
-
-        var inviteRecords = user.UserInviteInvitedUsers
-            .Concat(user.UserInviteInviterUsers)
-            .GroupBy(i => i.InviteId)
-            .Select(g => g.First())
-            .ToList();
-
-        var cartItems = user.Carts
-            .SelectMany(c => c.CartItems)
-            .ToList();
-
-        _db.CartItems.RemoveRange(cartItems);
-        _db.Addresses.RemoveRange(user.Addresses);
-        _db.AuditLogs.RemoveRange(user.AuditLogs);
-        _db.CouponRedemptions.RemoveRange(user.CouponRedemptions);
-        _db.UserInvites.RemoveRange(inviteRecords);
-        _db.UserRoles.RemoveRange(user.UserRoles);
-        _db.Carts.RemoveRange(user.Carts);
-        _db.Users.Remove(user);
-        _db.SaveChanges();
-
-        TempData["UserSuccess"] = $"ลบผู้ใช้ {user.Email} เรียบร้อยแล้ว";
-
         return RedirectToAction("Userlist", "Admin");
     }
 

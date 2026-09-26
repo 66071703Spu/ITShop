@@ -82,6 +82,8 @@ public class OrderController : Controller
         var order = _db.Orders
             .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Product)
+            .Include(o => o.Payments)
+            .Include(o => o.Shipments)
             .FirstOrDefault(o => o.OrderId == id && o.UserId == userId.Value);
 
         if (order == null)
@@ -90,8 +92,23 @@ public class OrderController : Controller
         }
 
         var status = (order.Status ?? string.Empty).ToLower();
-        if (status == "packed" || status == "shipped" || status == "delivered" || status == "cancelled")
+        if (status is "paid" or "packed" or "shipped" or "in_transit" or "delivered" or "returned" or "cancelled"
+            || order.Shipments.Any(shipment => shipment.Status is "packed" or "shipped" or "in_transit" or "delivered" or "returned"))
         {
+            TempData["OrderError"] = "ออเดอร์นี้ไม่สามารถยกเลิกได้แล้ว";
+            return RedirectToAction("OrderDetail", new { id });
+        }
+
+        using var transaction = _db.Database.BeginTransaction();
+        var changed = _db.Database.ExecuteSqlInterpolated($@"
+            UPDATE orders SET status = 'cancelled'
+            WHERE order_id = {order.OrderId}
+              AND (status IS NULL OR status NOT IN ('paid', 'packed', 'shipped', 'in_transit', 'delivered', 'returned', 'cancelled'))
+              AND NOT EXISTS (SELECT 1 FROM shipments WHERE order_id = {order.OrderId}
+                  AND status IN ('packed', 'shipped', 'in_transit', 'delivered', 'returned'));");
+        if (changed != 1)
+        {
+            transaction.Rollback();
             TempData["OrderError"] = "ออเดอร์นี้ไม่สามารถยกเลิกได้แล้ว";
             return RedirectToAction("OrderDetail", new { id });
         }
@@ -99,23 +116,32 @@ public class OrderController : Controller
         order.Status = "cancelled";
         order.CancelReason = string.IsNullOrWhiteSpace(cancelReason) ? "ยกเลิกโดยผู้ใช้" : cancelReason;
         order.CancelledAt = DateTime.Now;
-
-        foreach (var item in order.OrderItems)
+        foreach (var payment in order.Payments.Where(value => value.PaymentStatus == "pending"))
         {
-            if (item.Product != null)
-            {
-                item.Product.Stock = (item.Product.Stock ?? 0) + item.Quantity;
-                _db.Products.Update(item.Product);
+            payment.PaymentStatus = "cancelled";
+        }
 
-                _db.InventoryTransactions.Add(new InventoryTransaction
-                {
-                    ProductId = item.Product.ProductId,
-                    TransactionType = "IN",
-                    Quantity = item.Quantity,
-                    ReferenceOrderId = order.OrderId,
-                    CreatedAt = DateTime.Now
-                });
-            }
+        var stockReturns = _db.InventoryTransactions
+            .Where(entry => entry.ReferenceOrderId == order.OrderId && entry.TransactionType == "OUT"
+                && entry.ProductId.HasValue && entry.Quantity.HasValue)
+            .AsEnumerable()
+            .GroupBy(entry => entry.ProductId!.Value)
+            .Select(group => new { ProductId = group.Key, Quantity = group.Sum(entry => entry.Quantity!.Value) })
+            .ToList();
+
+        foreach (var stockReturn in stockReturns)
+        {
+            _db.Database.ExecuteSqlInterpolated($@"
+                UPDATE products SET stock = COALESCE(stock, 0) + {stockReturn.Quantity}
+                WHERE product_id = {stockReturn.ProductId};");
+            _db.InventoryTransactions.Add(new InventoryTransaction
+            {
+                ProductId = stockReturn.ProductId,
+                TransactionType = "IN",
+                Quantity = stockReturn.Quantity,
+                ReferenceOrderId = order.OrderId,
+                CreatedAt = DateTime.Now
+            });
         }
 
         _db.OrderStatusHistories.Add(new OrderStatusHistory
@@ -126,6 +152,7 @@ public class OrderController : Controller
         });
 
         _db.SaveChanges();
+        transaction.Commit();
 
         TempData["OrderSuccess"] = "ยกเลิกออเดอร์เรียบร้อยแล้ว";
         return RedirectToAction("OrderDetail", new { id });
@@ -152,7 +179,9 @@ public class OrderController : Controller
             PaymentMethod = order.Payments.OrderByDescending(p => p.PaidAt).Select(p => p.PaymentMethod).FirstOrDefault() ?? "-",
             PaymentStatus = order.Payments.OrderByDescending(p => p.PaidAt).Select(p => p.PaymentStatus).FirstOrDefault() ?? "-",
             ShippingProvider = order.Shipments.OrderByDescending(s => s.CreatedAt).Select(s => s.ShippingProvider).FirstOrDefault() ?? "-",
-            ShippingStatus = order.Shipments.OrderByDescending(s => s.CreatedAt).Select(s => s.Status).FirstOrDefault() ?? "-",
+            ShippingStatus = order.Status == "cancelled"
+                ? "cancelled"
+                : order.Shipments.OrderByDescending(s => s.CreatedAt).Select(s => s.Status).FirstOrDefault() ?? "-",
             TrackingNumber = order.Shipments.OrderByDescending(s => s.CreatedAt).Select(s => s.TrackingNumber).FirstOrDefault(),
             ShippingAddress = BuildAddressText(order.Shipments.OrderByDescending(s => s.CreatedAt).Select(s => s.Address).FirstOrDefault()),
             CancelReason = order.CancelReason,

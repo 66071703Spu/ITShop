@@ -18,6 +18,7 @@ public class SuperAdminController : Controller
         "promotions.manage",
         "brands.manage",
         "orders.view",
+        "orders.manage",
         "customers.manage"
     };
 
@@ -171,12 +172,13 @@ public class SuperAdminController : Controller
             FirstName = string.IsNullOrWhiteSpace(data.FirstName) ? "Admin" : data.FirstName,
             LastName = string.IsNullOrWhiteSpace(data.LastName) ? string.Empty : data.LastName,
             Email = data.Email.Trim(),
-            PasswordHash = data.Password,
+            PasswordHash = string.Empty,
             PhoneNumber = data.PhoneNumber,
             Status = string.IsNullOrWhiteSpace(data.Status) ? "active" : data.Status,
             CreatedAt = DateTime.Now
         };
 
+        user.PasswordHash = UserPasswordService.Hash(user, data.Password);
         _db.Users.Add(user);
         _db.SaveChanges();
 
@@ -597,6 +599,7 @@ public class SuperAdminController : Controller
             "promotions.manage" => "จัดการโปรโมชัน",
             "brands.manage" => "จัดการแบรนด์",
             "orders.view" => "ดูรายการสั่งซื้อ",
+            "orders.manage" => "จัดการการชำระเงินและการจัดส่ง",
             "customers.manage" => "จัดการลูกค้า",
             "admins.manage" => "จัดการบัญชีแอดมิน",
             "permissions.manage" => "จัดการสิทธิ์การเข้าถึง",

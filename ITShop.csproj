@@ -24,6 +24,8 @@
     <Compile Remove="Models\*_*.cs" />
     <Compile Remove="artifacts\**\*.cs" />
     <Compile Remove=".tmp-*\**\*.cs" />
+    <EmbeddedResource Include="Data\catalog-image-sources.json" />
+    <EmbeddedResource Include="Data\brand-logo-sources.json" />
   </ItemGroup>
 
 </Project>

@@ -27,7 +27,7 @@ public class HomeController : Controller
             .Include(p => p.ProductImages)
             .Include(p => p.Category)
             .Include(p => p.Promotions)
-            .Include(p => p.OrderItems)
+            .Include(p => p.OrderItems).ThenInclude(item => item.Order)
             .Where(p => p.Status == null || p.Status.ToLower() != "inactive")
             .OrderByDescending(p => p.CreatedAt)
             .ToList();
@@ -216,7 +216,9 @@ public class HomeController : Controller
                 .Select(i => i.ImageUrl ?? "https://placehold.co/300x300?text=No+Image")
                 .ToList(),
             ShowInPromotion = PromotionPriceCalculator.HasAutoApplyPromotion(product),
-            TotalSold = product.OrderItems.Sum(i => i.Quantity),
+            TotalSold = product.OrderItems
+                .Where(item => item.Order.Status is "paid" or "packed" or "shipped" or "in_transit" or "delivered")
+                .Sum(item => item.Quantity),
             OriginalPrice = promotionPrice.OriginalPrice,
             DiscountAmount = promotionPrice.DiscountAmount,
             HasAutoAppliedPromotion = promotionPrice.HasDiscount,

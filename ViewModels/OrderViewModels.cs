@@ -25,7 +25,9 @@ namespace ITShop.ViewModels
             get
             {
                 var status = (Status ?? string.Empty).ToLower();
-                return status != "packed" && status != "shipped" && status != "delivered" && status != "cancelled";
+                var shippingStatus = (ShippingStatus ?? string.Empty).ToLower();
+                return status is not ("paid" or "packed" or "shipped" or "in_transit" or "delivered" or "returned" or "cancelled")
+                    && shippingStatus is not ("packed" or "shipped" or "in_transit" or "delivered" or "returned");
             }
         }
     }

@@ -1,0 +1,296 @@
+[
+  {
+    "productId": 3,
+    "name": "AMD Ryzen 9 7950X3D",
+    "localPath": "/images/products/amd-ryzen-9-7950x3d.jpg",
+    "sourcePage": "https://www.skroutz.gr/s/40421098/AMD-Ryzen-9-7950X3D-4-2GHz-Epexergastis-16-Pyrinon-gia-Socket-AM5-se-Kouti.html",
+    "sourceImage": "https://a.scdn.gr/images/sku_images/105094/105094661/20241205160957_d3f91c48.jpeg"
+  },
+  {
+    "productId": 4,
+    "name": "Intel Core Ultra 7 270K Plus",
+    "localPath": "/images/products/intel-core-ultra-7-270k-plus.jpg",
+    "sourcePage": "https://www.fazaboa.com.br/ofertas/pichau/8480721",
+    "sourceImage": "https://media.pichau.com.br/media/catalog/product/cache/2f958555330323e505eba7ce930bdf27/b/x/bx80768270k.jpg"
+  },
+  {
+    "productId": 5,
+    "name": "AMD Ryzen 7 8700G",
+    "localPath": "/images/products/amd-ryzen-7-8700g.png",
+    "sourcePage": "https://www.reichelt.com/ie/en/shop/product/amd_am5_ryzen_7_8700g_8x_4_20_ghz_boxed-370378",
+    "sourceImage": "https://cdn-reichelt.de/bilder/web/xxl_ws/E910%2FAMD_8700G_01.png?type=ProductXxl"
+  },
+  {
+    "productId": 7,
+    "name": "RTX 4090",
+    "localPath": "/images/products/rtx-4090.jpg",
+    "sourcePage": "https://www.walmart.com/ip/1791608981",
+    "sourceImage": "https://i5.walmartimages.com/seo/NVIDIA-GeForce-RTX-4090-Graphics-card-NVIDIA-GeForce-RTX-4090-24-GB-GDDR6X-PCIe-4-0-HDMI-3-x-DisplayPort_a1a585f9-74ed-44e6-8e93-c1544efc92fa.3d678aa5901a818fcaea2a890c331b39.jpeg"
+  },
+  {
+    "productId": 8,
+    "name": "RTX 4070 Super",
+    "localPath": "/images/products/rtx-4070-super.webp",
+    "sourcePage": "https://geizhals.at/nvidia-geforce-rtx-4070-super-founders-edition-900-1g141-2534-000-a3104706.html",
+    "sourceImage": "https://gzhls.at/pix/fe/ce/fece68afdc30501e-l.webp"
+  },
+  {
+    "productId": 9,
+    "name": "RX 7900 XTX",
+    "localPath": "/images/products/rx-7900-xtx.jpg",
+    "sourcePage": "https://mbpc.gg/products/rx-7900xtx-amd-radeon-24gb-gaming-graphics-card-gpu",
+    "sourceImage": "https://mbpc.gg/cdn/shop/files/rx-7900xtx-amd-radeon-24gb-gaming-graphics-card-gpu.jpg?v=1728413389&width=1946"
+  },
+  {
+    "productId": 10,
+    "name": "ASUS ROG Strix X670E-E",
+    "localPath": "/images/products/asus-rog-strix-x670e-e.png",
+    "sourcePage": "https://press.asus.com/news/press-releases/1244",
+    "sourceImage": "https://press.asus.com/assets/w_894%2Ch_993/dd36a581-d843-4537-92f9-e6bc978355d9/ROG%20Strix%20X670E-E_01.png"
+  },
+  {
+    "productId": 11,
+    "name": "MSI B650 Tomahawk",
+    "localPath": "/images/products/msi-b650-tomahawk.jpg",
+    "sourcePage": "https://www.coolmatica.pt/store/motherboard/96472-motherboard-msi-mag-b650-tomahawk-wifi-amd-b650-am5-atx-4711377010153.html",
+    "sourceImage": "https://www.coolmatica.pt/store/235728-large_default/motherboard-msi-mag-b650-tomahawk-wifi-amd-b650-am5-atx.jpg"
+  },
+  {
+    "productId": 12,
+    "name": "Gigabyte Z790 AORUS Elite",
+    "localPath": "/images/products/gigabyte-z790-aorus-elite.png",
+    "sourcePage": "https://www.gigabyte.com/br/Motherboard/Z790-AORUS-ELITE-rev-11",
+    "sourceImage": "https://static.gigabyte.com/StaticFile/Image/Global/110307a0653366f235345f48b59364f2/Product/34192/png/500"
+  },
+  {
+    "productId": 13,
+    "name": "Corsair Vengeance DDR5 32GB",
+    "localPath": "/images/products/corsair-vengeance-ddr5-32gb.jpg",
+    "sourcePage": "https://www.mediamarkt.es/es/product/_memoria-ram-corsair-corsair-vengeance-cmk32gx5m2b5200c40-modulo-de-memoria-32-gb-2-x-16-gb-ddr5-5200-mhz-107734004.html",
+    "sourceImage": "https://assets.mmsrg.com/isr/166325/c1/-/ASSET_MP_142979073?align=center&cdx=536&cdy=402&cox=0&coy=0&ex=536&ey=402&format=jpg&quality=80&resizesource=&sp=yes&strip=yes&trim=&unsharp=1.5x1+0.7+0.02&x=536&y=402"
+  },
+  {
+    "productId": 14,
+    "name": "G.Skill Trident Z5 RGB",
+    "localPath": "/images/products/g-skill-trident-z5-rgb.png",
+    "sourcePage": "https://www.gskill.com/specification/165/374/1648545408/F5-5600J3636D32GX2-TZ5RK-F5-5600J3636D32GA2-TZ5RK-Specification",
+    "sourceImage": "https://www.gskill.com/_upload/images/164854540813.png"
+  },
+  {
+    "productId": 15,
+    "name": "Kingston Fury Beast DDR5",
+    "localPath": "/images/products/kingston-fury-beast-ddr5.jpg",
+    "sourcePage": "https://www.spdigital.cl/32gb-6000mts-ddr5-cl36-dimm-fury-beast-black-expo/",
+    "sourceImage": "https://media.spdigital.cl/thumbnails/products/kgakenas_f098c615_thumbnail_4096.jpg"
+  },
+  {
+    "productId": 16,
+    "name": "Samsung 990 Pro",
+    "localPath": "/images/products/samsung-990-pro.png",
+    "sourcePage": "https://www.jumbo-computer.com/products/samsung-1tb-990-pro-mz-v9p1t0bw-m-2-2280-pcie-gen4-x4-ssd",
+    "sourceImage": "https://www.jumbo-computer.com/cdn/shop/files/tw-990pro-nvme-m2-ssd-mz-v9p1t0bw-534292579_800x.png?v=1739431940"
+  },
+  {
+    "productId": 17,
+    "name": "WD Black SN850X",
+    "localPath": "/images/products/wd-black-sn850x.webp",
+    "sourcePage": "https://upg.uz/product/wd-black-sn850x-2tb-nvme-4807",
+    "sourceImage": "https://files.ox-sys.com/cache/original/image/8e/b4/c7/8eb4c7629ad3960b07ed4fc558b354e72e71688c77f713eaa83780a472166787.webp"
+  },
+  {
+    "productId": 18,
+    "name": "Seagate Barracuda",
+    "localPath": "/images/products/seagate-barracuda.jpg",
+    "sourcePage": "https://www.mini-itx.com/~ST4000DM004",
+    "sourceImage": "https://static.mini-itx.com/store/images/BC35-01XL.jpg"
+  },
+  {
+    "productId": 19,
+    "name": "Corsair RM850x",
+    "localPath": "/images/products/corsair-rm850x.jpg",
+    "sourcePage": "https://ecommerce.datablitz.com.ph/products/corsair-rm850x-850w-cybenetics-gold-atx-3-1-pcie-5-1-fully-modular-atx-power-supply-cp-9020270-na",
+    "sourceImage": "https://ecommerce.datablitz.com.ph/cdn/shop/files/corsair_rmx_series_rm850x_850w_80_gold_atx_31_fully_modular_atx_power_supply_ac74762_33663_1600x.jpg?v=1724823275"
+  },
+  {
+    "productId": 20,
+    "name": "Seasonic Focus GX-750",
+    "localPath": "/images/products/seasonic-focus-gx-750.jpg",
+    "sourcePage": "https://www.j-power.com.tw/h/ProductDetail?key=vmhbs&productId=11312",
+    "sourceImage": "https://www.j-power.com.tw/Uploads/Product/11312_nmmva00h.jpg"
+  },
+  {
+    "productId": 21,
+    "name": "Cooler Master MWE Gold",
+    "localPath": "/images/products/cooler-master-mwe-gold.webp",
+    "sourcePage": "https://www.techglobe.pk/power-supply/cooler-master-mwe-gold-750w-v3-atx-power-supply",
+    "sourceImage": "https://static3.webx.pk/files/4012/Images/mwe-gold-750-v3-gallery-1-78721-0-261125075327729-4012-0-021225101920518.webp"
+  },
+  {
+    "productId": 22,
+    "name": "NZXT Kraken X63",
+    "localPath": "/images/products/nzxt-kraken-x63.jpg",
+    "sourcePage": "https://www.msystems.gr/cpu-coolers/nzxt-kraken-x63-liquid-cpu-cooler-rl-krx63-01",
+    "sourceImage": "https://static.msystems.gr/photos/big_photos/29374.jpg"
+  },
+  {
+    "productId": 23,
+    "name": "Noctua NH-D15",
+    "localPath": "/images/products/noctua-nh-d15.jpg",
+    "sourcePage": "https://os-jo.com/noctua-nh-d15-premium-cpu-cooler-with-2x-nf-a15-pwm-140mm-fans-brown",
+    "sourceImage": "https://os-jo.com/image/cache/catalog/products/ANOCTUA/NH-D15/noctua-1200x630.jpeg"
+  },
+  {
+    "productId": 24,
+    "name": "Hyper 212",
+    "localPath": "/images/products/hyper-212.jpg",
+    "sourcePage": "https://www.adorama.com/coolermaster-hyper-212-120-mm-cpu-air-cooler/p/cmrs4kk25snr",
+    "sourceImage": "https://www.adorama.com/images/Large/CMRS4KK25SNR.JPG"
+  },
+  {
+    "productId": 25,
+    "name": "Lian Li PC-O11 Dynamic",
+    "localPath": "/images/products/lian-li-pc-o11-dynamic.png",
+    "sourcePage": "https://www.computerpilot.nl/products/lian-li-pc-o11-dynamic-zwart",
+    "sourceImage": "https://www.computerpilot.nl/cdn/shop/products/Lian_Li_PC-O11_Dynamic_Zwart.png?v=1643035414"
+  },
+  {
+    "productId": 26,
+    "name": "NZXT H510",
+    "localPath": "/images/products/nzxt-h510.png",
+    "sourcePage": "https://os-jo.com/nzxt-h510-matte-black-tempered-glass-gaming-case",
+    "sourceImage": "https://os-jo.com/image/cache/catalog/products/cases/NZXT/h510-black/large_67800f581df56721222-1200x1200.png"
+  },
+  {
+    "productId": 27,
+    "name": "Corsair 4000D Airflow",
+    "localPath": "/images/products/corsair-4000d-airflow.jpg",
+    "sourcePage": "https://www.invidcomputers.com/gabinete-corsair-4000d-airflow-mid-tower-tg-fan-x2-black-1904---det--0413090",
+    "sourceImage": "https://www.invidcomputers.com/images/000000000041309044388-base-4000d-airflow-config-Gallery-4000D-AF-BLACK-01.jpg"
+  },
+  {
+    "productId": 28,
+    "name": "LG UltraGear 27GP850",
+    "localPath": "/images/products/lg-ultragear-27gp850.jpg",
+    "sourcePage": "https://www.tohome.com/product_detail/20210900088/LG-27-UltraGear-27GP850B-Gaming-Monitor-",
+    "sourceImage": "https://www.tohome.com/images/Products/500/23092021/27GP850-B.jpg"
+  },
+  {
+    "productId": 29,
+    "name": "ASUS TUF VG27AQ",
+    "localPath": "/images/products/asus-tuf-vg27aq.png",
+    "sourcePage": "https://www.asus.com/us/displays-desktops/monitors/tuf-gaming/tuf-gaming-vg27aq/",
+    "sourceImage": "https://www.asus.com/media/global/gallery/85ssljuw0k4w2hbp_setting_xxx_0_90_end_1000.png"
+  },
+  {
+    "productId": 30,
+    "name": "Samsung Odyssey G7",
+    "localPath": "/images/products/samsung-odyssey-g7.jpg",
+    "sourcePage": "https://www.jib.co.th/web/product/readProduct/41037/MONITOR--%E0%B8%88%E0%B8%AD%E0%B8%A1%E0%B8%AD%E0%B8%99%E0%B8%B4%E0%B9%80%E0%B8%95%E0%B8%AD%E0%B8%A3%E0%B9%8C--SAMSUNG-32G75TQSEXXT-31-5-INCH-VA-ODYSSEY-CURVED-2K-HDR-240Hz-G-SYNC-COM?srsltid=AfmBOorPcG7_zD6F86yWkELXkpXUJLTipTzHg0Mdv9svBmTwj9jXv21_",
+    "sourceImage": "https://www.jib.co.th/img_master/product/original/20210914155555_41037_352_2.jpg"
+  },
+  {
+    "productId": 31,
+    "name": "ROG Zephyrus G14",
+    "localPath": "/images/products/rog-zephyrus-g14.jpg",
+    "sourcePage": "https://www.techradar.com/pro/it-could-take-on-apples-macbook-pro-asuss-spectacular-amd-ryzen-9-8945hs-laptop-finally-goes-on-preorder-but-im-not-sure-it-is-worth-the-premium",
+    "sourceImage": "https://cdn.mos.cms.futurecdn.net/hky2gXfck7HLj3TPALPtJa.jpg"
+  },
+  {
+    "productId": 32,
+    "name": "Lenovo Legion 5",
+    "localPath": "/images/products/lenovo-legion-5.jpg",
+    "sourcePage": "https://www.euronics.de/computer-und-buero/pc-und-notebooks/notebooks/15-zoll-notebooks/legion-5-15ach6a-82nw004pge-39-62-cm-15-6-gaming-notebook-phantom-blue-4065327336641",
+    "sourceImage": "https://image.euronics.de/media/image/95/ff/3e/f180ce9d-3476-440d-bba8-533eccd4786f_600x600.jpg"
+  },
+  {
+    "productId": 33,
+    "name": "MSI Katana 15",
+    "localPath": "/images/products/msi-katana-15.jpg",
+    "sourcePage": "https://bigmag.ua/noutbuk-msi-katana-15-hx-b14wgk-293us-katana15hxb14293.html",
+    "sourceImage": "https://bigmag.ua/image/cache/catalog/new/Wind/MSI%20Katana%2015%20HX%20B14WGK-293US%20%28KATANA15HXB14293%29/1-2000x2000.jpg"
+  },
+  {
+    "productId": 34,
+    "name": "G Pro X Superlight",
+    "localPath": "/images/products/g-pro-x-superlight.jpg",
+    "sourcePage": "https://pcpalace.com.sa/products/Logitech-G-Pro-X",
+    "sourceImage": "https://media.zid.store/e4aadd21-62d3-4ecb-b286-5cfefed6d23c/332c17ee-2858-4d5d-a936-4218927268b0.jpg"
+  },
+  {
+    "productId": 35,
+    "name": "DeathAdder V3",
+    "localPath": "/images/products/deathadder-v3-razer.png",
+    "sourcePage": "https://www.razer.com/gaming-mice/razer-deathadder-v3",
+    "sourceImage": "https://medias-p1.phoenix.razer.com/sys-master-phoenix-images-container/h79/haf/9529652674590/deathadder-v3-2-500x500.png"
+  },
+  {
+    "productId": 36,
+    "name": "Rival 5",
+    "localPath": "/images/products/rival-5.jpg",
+    "sourcePage": "https://www.alza.cz/steelseries-rival-5-d6482087.htm",
+    "sourceImage": "https://image.alza.cz/products/MXS21A14/MXS21A14.jpg"
+  },
+  {
+    "productId": 37,
+    "name": "Keychron K6",
+    "localPath": "/images/products/keychron-k6.jpg",
+    "sourcePage": "https://shelter.pl/products/keychron-k6-wireless-mechanical-keyboard-bezprzewodowa-klawiatura-mechaniczna",
+    "sourceImage": "https://shelter.pl/cdn/shop/files/Keychron-k6.jpg?v=1762344166"
+  },
+  {
+    "productId": 38,
+    "name": "Corsair K70 RGB Pro",
+    "localPath": "/images/products/corsair-k70-rgb-pro.jpg",
+    "sourcePage": "https://www.ask-corp.jp/products/corsair/gaming/keyboard/k70-rgb-pro.html",
+    "sourceImage": "https://www.ask-corp.jp/products/images/corsair/k70-rgb-pro_01.jpg"
+  },
+  {
+    "productId": 39,
+    "name": "Razer Huntsman V2",
+    "localPath": "/images/products/razer-huntsman-v2.jpg",
+    "sourcePage": "https://rbtechngames.com/shop-2/gaming-gear-peripherals/keyboards/razer-huntsman-v2-optical-gaming-keyboard-us-layout-full-size-linear-red-switch/",
+    "sourceImage": "https://rbtechngames.com/wp-content/uploads/2022/04/razer_huntsman_v2_1.jpg"
+  },
+  {
+    "productId": 40,
+    "name": "HyperX Cloud II",
+    "localPath": "/images/products/hyperx-cloud-ii.jpg",
+    "sourcePage": "https://uk.hyperx.com/products/hyperx-cloud-ii",
+    "sourceImage": "https://uk.hyperx.com/cdn/shop/files/hyperx_cloud_ii_red_1_main.jpg?v=1770037214"
+  },
+  {
+    "productId": 41,
+    "name": "Arctis 7",
+    "localPath": "/images/products/arctis-7.jpg",
+    "sourcePage": "https://skeleton-headsets.myshopify.com/products/steelseries-arctis-7-ps4-xbox-one-pc",
+    "sourceImage": "https://skeleton-headsets.myshopify.com/cdn/shop/products/SteelSeries-Arctis-7-Gaming-Headset-PS4-XBOX-ONE-PC-01_800x.jpg?v=1517952451"
+  },
+  {
+    "productId": 42,
+    "name": "BlackShark V2",
+    "localPath": "/images/products/blackshark-v2.jpg",
+    "sourcePage": "https://atehno.md/products/razer-blackshark-v2-gaming-headset-hyperclear-cardioid-mic-with-usb-sound-card-50mm-neodymium-driver-units-ultrasoft-flowknit-memory-foam-ear-cushions-connectivity-35mm-jack-usb-sound-card-9359844137030",
+    "sourceImage": "https://atehno.md/files/items/razer-blackshark-v2-gaming-headset-hyperclear-93598441370302.jpg"
+  },
+  {
+    "productId": 43,
+    "name": "Elgato Stream Deck",
+    "localPath": "/images/products/elgato-stream-deck.jpg",
+    "sourcePage": "https://www.newegg.ca/elgato-stream-deck/p/N82E16815131024",
+    "sourceImage": "https://c1.neweggimages.com/ProductImageCompressAll1280/15-131-024-Z02.jpg"
+  },
+  {
+    "productId": 44,
+    "name": "Razer Firefly",
+    "localPath": "/images/products/razer-firefly.jpg",
+    "sourcePage": "https://www.coolshop.dk/produkt/razer-firefly-cloth-edition-gaming-musmaatte/AN6K28/",
+    "sourceImage": "https://scale.coolshop-cdn.com/product-media.coolshop-cdn.com/AN6K28/ca96fc8e4ace43a8a4ed0444205d1b95.jpeg/f/razer-firefly-cloth-edition-gaming-musmaatte.jpeg?borderless=1&width=1920"
+  },
+  {
+    "productId": 45,
+    "name": "Logitech G29",
+    "localPath": "/images/products/logitech-g29.jpg",
+    "sourcePage": "https://gameakjo.com/products/logitech-g29-racing-wheel-for-playstation-and-pc",
+    "sourceImage": "https://gameakjo.com/cdn/shop/files/logitech-g29-racing-wheel-for-playstation-and-pc-199.jpg?v=1756911243&width=1000"
+  }
+]

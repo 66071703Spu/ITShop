@@ -327,6 +327,11 @@ public class CartController : Controller
         }
 
         var normalizedShippingProvider = NormalizeShippingProvider(shippingProvider);
+        if (paymentMethod != "Cash on Delivery" && paymentMethod != "Bank Transfer")
+        {
+            TempData["CartError"] = "วิธีชำระเงินไม่ถูกต้อง กรุณาเลือกใหม่";
+            return RedirectToAction("Checkout", new { buyNow });
+        }
 
         // เช็คว่าเป็นคำสั่งซื้อแรกของผู้ใช้หรือไม่เพื่อใช้กับระบบ invite reward
         var hadPreviousOrders = _db.Orders.Any(o => o.UserId == userId.Value);
@@ -347,6 +352,7 @@ public class CartController : Controller
 
         // ใช้ transaction ครอบการตัดสต็อกและสร้าง order เพื่อให้ข้อมูลสอดคล้องกัน
         using var transaction = _db.Database.BeginTransaction();
+        var componentStockChanges = new List<(int ProductId, int Quantity)>();
 
         foreach (var item in cartItems)
         {
@@ -368,23 +374,55 @@ public class CartController : Controller
                 TempData["CartError"] = $"สินค้า {item.ProductName} มี stock ไม่เพียงพอแล้ว กรุณาตรวจสอบตะกร้าอีกครั้ง";
                 return RedirectToAction("Checkout", new { buyNow });
             }
+
+            var orderedProduct = _db.Products
+                .Include(product => product.Category)
+                .First(product => product.ProductId == item.ProductId.Value);
+            if (PackageAvailabilityHelper.IsComset(orderedProduct))
+            {
+                var package = PackageAvailabilityHelper.FindPackage(_db, orderedProduct);
+                if (package == null || PackageAvailabilityHelper.GetAvailableStock(orderedProduct, package) < item.Quantity)
+                {
+                    transaction.Rollback();
+                    TempData["CartError"] = $"ชิ้นส่วนในเซต {item.ProductName} ไม่พร้อมขายแล้ว";
+                    return RedirectToAction("Checkout", new { buyNow });
+                }
+
+                foreach (var component in package.PackageItems)
+                {
+                    var quantity = item.Quantity * component.Quantity!.Value;
+                    var componentRows = _db.Database.ExecuteSqlInterpolated($@"
+                        UPDATE products SET stock = stock - {quantity}
+                        WHERE product_id = {component.ProductId!.Value} AND stock >= {quantity};");
+                    if (componentRows != 1)
+                    {
+                        transaction.Rollback();
+                        TempData["CartError"] = $"ชิ้นส่วนในเซต {item.ProductName} มี stock ไม่เพียงพอแล้ว";
+                        return RedirectToAction("Checkout", new { buyNow });
+                    }
+
+                    componentStockChanges.Add((component.ProductId.Value, quantity));
+                }
+            }
         }
 
         // สร้างข้อมูล order หลักก่อนเพื่อให้ตารางอื่นใช้อ้างอิง order id ได้
         var order = new Order
         {
             UserId = userId.Value,
-            OrderNumber = $"ORD{DateTime.Now:yyyyMMddHHmmss}",
+            // A temporary unique value lets the database assign the order ID first.
+            OrderNumber = $"TMP-{Guid.NewGuid():N}",
             TotalAmount = originalSubtotal,
             DiscountAmount = discountAmount,
             ShippingFee = ShippingFee,
             FinalAmount = finalTotal,
-            Status = "paid",
+            Status = "pending",
             CreatedAt = DateTime.Now
         };
 
         _db.Orders.Add(order);
         _db.SaveChanges();
+        order.OrderNumber = $"ORD{DateTime.Now:yyyyMMddHHmmss}-{order.OrderId:D6}";
 
         // บันทึกประวัติสถานะ order และข้อมูลการจัดส่งสำหรับติดตามภายหลัง
         _db.OrderStatusHistories.Add(new OrderStatusHistory
@@ -399,7 +437,7 @@ public class CartController : Controller
             OrderId = order.OrderId,
             AddressId = shippingAddress.AddressId,
             ShippingProvider = normalizedShippingProvider,
-            TrackingNumber = BuildTrackingNumber(normalizedShippingProvider, order.OrderId),
+            TrackingNumber = null,
             Status = "pending",
             CreatedAt = DateTime.Now
         });
@@ -431,6 +469,18 @@ public class CartController : Controller
             });
         }
 
+        foreach (var change in componentStockChanges)
+        {
+            _db.InventoryTransactions.Add(new InventoryTransaction
+            {
+                ProductId = change.ProductId,
+                TransactionType = "OUT",
+                Quantity = change.Quantity,
+                ReferenceOrderId = order.OrderId,
+                CreatedAt = DateTime.Now
+            });
+        }
+
         // บันทึกการใช้คูปองเมื่อ order พร้อมจะถูกบันทึกจริงแล้วเท่านั้น
         if (appliedCoupon != null)
         {
@@ -447,9 +497,9 @@ public class CartController : Controller
         _db.Payments.Add(new Payment
         {
             OrderId = order.OrderId,
-            PaymentMethod = string.IsNullOrWhiteSpace(paymentMethod) ? "Cash on Delivery" : paymentMethod,
-            PaymentStatus = "paid",
-            PaidAt = DateTime.Now
+            PaymentMethod = paymentMethod,
+            PaymentStatus = "pending",
+            PaidAt = null
         });
 
         // แจก reward ให้ผู้เชิญเฉพาะกรณีที่ผู้ถูกเชิญเพิ่งสั่งซื้อครั้งแรก
@@ -641,6 +691,7 @@ public class CartController : Controller
 
         var products = _db.Products
             .Include(p => p.Brand)
+            .Include(p => p.Category)
             .Include(p => p.ProductImages)
             .Include(p => p.Promotions)
             .Where(p => productIds.Contains(p.ProductId))
@@ -658,7 +709,8 @@ public class CartController : Controller
                 continue;
             }
 
-            var stock = Math.Max(product.Stock ?? 0, 0);
+            var stock = PackageAvailabilityHelper.GetAvailableStock(
+                product, PackageAvailabilityHelper.FindPackage(_db, product));
             if (stock <= 0)
             {
                 removedUnavailableCount += 1;
@@ -680,7 +732,7 @@ public class CartController : Controller
             item.HasAutoAppliedPromotion = promotionPrice.HasDiscount;
             item.ActivePromotionName = promotionPrice.PromotionName;
             item.DiscountLabel = promotionPrice.DiscountLabel;
-            item.Stock = product.Stock;
+            item.Stock = stock;
             item.Quantity = normalizedQuantity;
             item.ImageUrl = product.ProductImages
                 .OrderByDescending(i => i.IsMain == true)
@@ -696,12 +748,12 @@ public class CartController : Controller
     // ปรับจำนวนที่ขอให้สอดคล้องกับสต็อกของสินค้าปัจจุบัน
     private int? NormalizeQuantityForProduct(int productId, int quantity)
     {
-        var stock = _db.Products
-            .Where(p => p.ProductId == productId)
-            .Select(p => p.Stock)
-            .FirstOrDefault();
-
-        var availableStock = Math.Max(stock ?? 0, 0);
+        var product = _db.Products
+            .Include(p => p.Category)
+            .FirstOrDefault(p => p.ProductId == productId);
+        var availableStock = product == null || string.Equals(product.Status, "inactive", StringComparison.OrdinalIgnoreCase)
+            ? 0
+            : PackageAvailabilityHelper.GetAvailableStock(product, PackageAvailabilityHelper.FindPackage(_db, product));
         if (availableStock <= 0)
         {
             return null;
@@ -862,19 +914,6 @@ public class CartController : Controller
             string.Equals(provider.Value, shippingProvider, StringComparison.OrdinalIgnoreCase));
 
         return selectedProvider?.Value ?? ShippingProviders[0].Value;
-    }
-
-    // สร้างเลขติดตามพัสดุเมื่อมีการสร้าง shipment ตอน checkout
-    private static string BuildTrackingNumber(string shippingProvider, int orderId)
-    {
-        var prefix = shippingProvider switch
-        {
-            "Flash Express" => "FLA",
-            "Kerry Express" => "KRY",
-            _ => "THP"
-        };
-
-        return $"{prefix}-{DateTime.Now:yyyyMMddHHmmss}-{orderId:D4}";
     }
 
     // ปรับรูปแบบข้อความคูปองให้พร้อมสำหรับนำไปเปรียบเทียบ

@@ -33,7 +33,8 @@ public class AdminController : Controller
         ["DeleteBrand"] = "brands.manage",
         ["DeleteBrandLogo"] = "brands.manage",
         ["OrderList"] = "orders.view",
-        ["EditShipment"] = "orders.view",
+        ["EditShipment"] = "orders.manage",
+        ["ConfirmPayment"] = "orders.manage",
         ["Userlist"] = "customers.manage",
         ["CustomerProfile"] = "customers.manage",
         ["Adduser"] = "customers.manage",
@@ -51,10 +52,9 @@ public class AdminController : Controller
     private static readonly string[] ShippingStatusOptions =
     {
         "pending",
-        "packed",
         "shipped",
-        "delivered",
-        "cancelled"
+        "in_transit",
+        "delivered"
     };
 
     private readonly Csi402dbContext _db;
@@ -357,6 +357,7 @@ public class AdminController : Controller
 
         _db.Brands.Remove(brand);
         _db.SaveChanges();
+        DeleteUploadedFile(brand.LogoUrl);
 
         TempData["BrandSuccess"] = $"ลบแบรนด์ {brand.BrandName} เรียบร้อยแล้ว";
         return RedirectToAction("BrandList");
@@ -520,15 +521,15 @@ public class AdminController : Controller
     // สร้างแบนเนอร์ใหม่สำหรับหน้าร้านและอัปโหลดรูปภาพ
     public IActionResult AddBanner(BannerViewModel data)
     {
-        if (!TryPrepareBannerImageUrl(data, null, out var imageUrl, out var imageError))
-        {
-            ViewBag.Error = imageError;
-            return View(data);
-        }
-
         if (data.EndDate.HasValue && data.StartDate.HasValue && data.EndDate < data.StartDate)
         {
             ViewBag.Error = "วันสิ้นสุดต้องไม่น้อยกว่าวันเริ่มต้น";
+            return View(data);
+        }
+
+        if (!TryPrepareBannerImageUrl(data, null, out var imageUrl, out var imageError))
+        {
+            ViewBag.Error = imageError;
             return View(data);
         }
 
@@ -573,13 +574,6 @@ public class AdminController : Controller
             return RedirectToAction("BannerList");
         }
 
-        if (!TryPrepareBannerImageUrl(data, banner.ImageUrl, out var imageUrl, out var imageError))
-        {
-            ViewBag.Error = imageError;
-            data.ImageUrl = banner.ImageUrl;
-            return View(data);
-        }
-
         if (data.EndDate.HasValue && data.StartDate.HasValue && data.EndDate < data.StartDate)
         {
             ViewBag.Error = "วันสิ้นสุดต้องไม่น้อยกว่าวันเริ่มต้น";
@@ -587,6 +581,14 @@ public class AdminController : Controller
             return View(data);
         }
 
+        if (!TryPrepareBannerImageUrl(data, banner.ImageUrl, out var imageUrl, out var imageError))
+        {
+            ViewBag.Error = imageError;
+            data.ImageUrl = banner.ImageUrl;
+            return View(data);
+        }
+
+        var previousImageUrl = banner.ImageUrl;
         banner.Title = data.Title;
         banner.ImageUrl = imageUrl!;
         banner.Position = string.IsNullOrWhiteSpace(data.Position) ? "home_top" : data.Position;
@@ -597,6 +599,10 @@ public class AdminController : Controller
 
         _db.Banners.Update(banner);
         _db.SaveChanges();
+        if (!string.Equals(previousImageUrl, imageUrl, StringComparison.OrdinalIgnoreCase))
+        {
+            DeleteUploadedFile(previousImageUrl);
+        }
 
         return RedirectToAction("BannerList");
     }
@@ -611,6 +617,7 @@ public class AdminController : Controller
         {
             _db.Banners.Remove(banner);
             _db.SaveChanges();
+            DeleteUploadedFile(banner.ImageUrl);
         }
 
         return RedirectToAction("BannerList");
@@ -774,7 +781,7 @@ public class AdminController : Controller
             .Include(p => p.Category)
             .Include(p => p.ProductImages)
             .Include(p => p.Promotions)
-            .Include(p => p.OrderItems)
+            .Include(p => p.OrderItems).ThenInclude(item => item.Order)
             .FirstOrDefault(p => p.ProductId == id);
 
         if (product == null)
@@ -1029,6 +1036,51 @@ public class AdminController : Controller
         return View(orders);
     }
 
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult ConfirmPayment(int orderId)
+    {
+        using var transaction = _db.Database.BeginTransaction();
+        var order = _db.Orders
+            .Include(value => value.Payments)
+            .FirstOrDefault(value => value.OrderId == orderId);
+        var payment = order?.Payments.OrderByDescending(value => value.PaymentId).FirstOrDefault();
+        if (order == null || payment == null || order.Status == "cancelled"
+            || payment.PaymentStatus != "pending")
+        {
+            TempData["OrderError"] = "คำสั่งซื้อนี้ไม่สามารถยืนยันการชำระเงินได้";
+            return RedirectToAction(nameof(OrderList));
+        }
+
+        var paymentRows = _db.Database.ExecuteSqlInterpolated($@"
+            UPDATE payments SET payment_status = 'paid', paid_at = {DateTime.Now}
+            WHERE payment_id = {payment.PaymentId} AND payment_status = 'pending';");
+        if (paymentRows != 1)
+        {
+            transaction.Rollback();
+            TempData["OrderError"] = "รายการชำระเงินนี้ถูกยืนยันไปแล้ว";
+            return RedirectToAction(nameof(OrderList));
+        }
+
+        payment.PaymentStatus = "paid";
+        payment.PaidAt = DateTime.Now;
+        if (order.Status == "pending")
+        {
+            order.Status = "paid";
+            _db.OrderStatusHistories.Add(new OrderStatusHistory
+            {
+                OrderId = order.OrderId,
+                Status = "paid",
+                ChangedAt = DateTime.Now
+            });
+        }
+
+        _db.SaveChanges();
+        transaction.Commit();
+        TempData["OrderSuccess"] = $"ยืนยันการชำระเงินของ {order.OrderNumber} แล้ว";
+        return RedirectToAction(nameof(OrderList));
+    }
+
     // เปิดหน้าจอแก้ไขข้อมูลจัดส่งของ shipment ล่าสุดใน order
     public IActionResult EditShipment(int orderId)
     {
@@ -1044,6 +1096,12 @@ public class AdminController : Controller
             return RedirectToAction("OrderList");
         }
 
+        if (order.Status == "cancelled")
+        {
+            TempData["OrderError"] = "คำสั่งซื้อที่ยกเลิกแล้วไม่สามารถแก้ไข shipment ได้";
+            return RedirectToAction("OrderList");
+        }
+
         var shipment = order.Shipments
             .OrderByDescending(s => s.CreatedAt)
             .FirstOrDefault();
@@ -1051,6 +1109,12 @@ public class AdminController : Controller
         if (shipment == null)
         {
             TempData["OrderError"] = "คำสั่งซื้อนี้ยังไม่มีข้อมูล shipment ให้แก้ไข";
+            return RedirectToAction("OrderList");
+        }
+
+        if (shipment.Status is "failed" or "returned")
+        {
+            TempData["OrderError"] = "shipment ที่สิ้นสุดแล้วไม่สามารถแก้ไขผ่านฟอร์มนี้ได้";
             return RedirectToAction("OrderList");
         }
 
@@ -1074,6 +1138,12 @@ public class AdminController : Controller
             return RedirectToAction("OrderList");
         }
 
+        if (shipment.Order.Status == "cancelled" || shipment.Status is "failed" or "returned")
+        {
+            TempData["OrderError"] = "shipment ของคำสั่งซื้อที่ยกเลิกแล้วไม่สามารถแก้ไขได้";
+            return RedirectToAction("OrderList");
+        }
+
         if (!ShippingProviderOptions.Contains(data.ShippingProvider, StringComparer.OrdinalIgnoreCase))
         {
             ModelState.AddModelError(nameof(data.ShippingProvider), "ผู้จัดส่งที่เลือกไม่ถูกต้อง");
@@ -1082,6 +1152,15 @@ public class AdminController : Controller
         if (!ShippingStatusOptions.Contains(data.ShippingStatus, StringComparer.OrdinalIgnoreCase))
         {
             ModelState.AddModelError(nameof(data.ShippingStatus), "สถานะ shipment ที่เลือกไม่ถูกต้อง");
+        }
+
+        var currentShippingStatus = shipment.Status.ToLowerInvariant();
+        var nextShippingStatus = data.ShippingStatus?.ToLowerInvariant();
+        if ((currentShippingStatus == "shipped" && nextShippingStatus is not ("shipped" or "in_transit" or "delivered"))
+            || (currentShippingStatus == "in_transit" && nextShippingStatus is not ("in_transit" or "delivered"))
+            || (currentShippingStatus == "delivered" && nextShippingStatus != "delivered"))
+        {
+            ModelState.AddModelError(nameof(data.ShippingStatus), "ไม่สามารถย้อนสถานะหลังจัดส่งแล้ว");
         }
 
         if (!ModelState.IsValid)
@@ -1094,17 +1173,44 @@ public class AdminController : Controller
             return View(data);
         }
 
+        using var transaction = _db.Database.BeginTransaction();
+        var paymentIsPaid = _db.Payments.Any(payment => payment.OrderId == data.OrderId && payment.PaymentStatus == "paid");
+        var nextOrderStatus = nextShippingStatus == "pending"
+            ? paymentIsPaid ? "paid" : "pending"
+            : nextShippingStatus!;
+        if (shipment.Order.Status != nextOrderStatus)
+        {
+            var updatedRows = _db.Database.ExecuteSqlInterpolated($@"
+                UPDATE orders SET status = {nextOrderStatus}
+                WHERE order_id = {data.OrderId} AND (status IS NULL OR status <> 'cancelled');");
+            if (updatedRows != 1)
+            {
+                transaction.Rollback();
+                TempData["OrderError"] = "สถานะคำสั่งซื้อเปลี่ยนไปแล้ว กรุณาเปิดหน้าอีกครั้ง";
+                return RedirectToAction("OrderList");
+            }
+
+            shipment.Order.Status = nextOrderStatus;
+            _db.OrderStatusHistories.Add(new OrderStatusHistory
+            {
+                OrderId = data.OrderId,
+                Status = nextOrderStatus,
+                ChangedAt = DateTime.Now
+            });
+        }
+
         shipment.ShippingProvider = ShippingProviderOptions
             .First(option => string.Equals(option, data.ShippingProvider, StringComparison.OrdinalIgnoreCase));
         shipment.Status = ShippingStatusOptions
             .First(option => string.Equals(option, data.ShippingStatus, StringComparison.OrdinalIgnoreCase));
         shipment.TrackingNumber = string.IsNullOrWhiteSpace(data.TrackingNumber)
-            ? BuildShipmentTrackingNumber(shipment.ShippingProvider ?? ShippingProviderOptions[0], shipment.OrderId, shipment.ShipmentId)
+            ? null
             : data.TrackingNumber.Trim();
 
         ApplyShipmentTimestamps(shipment);
 
         _db.SaveChanges();
+        transaction.Commit();
 
         TempData["OrderSuccess"] = $"อัปเดต shipment ของคำสั่งซื้อ {shipment.Order.OrderNumber ?? $"ORD{shipment.Order.OrderId}"} เรียบร้อยแล้ว";
         return RedirectToAction("OrderList");
@@ -1279,7 +1385,8 @@ public class AdminController : Controller
             return View(data);
         }
 
-        var checkEmail = _db.Users.FirstOrDefault(u => u.Email == data.Email);
+        var normalizedEmail = data.Email.Trim();
+        var checkEmail = _db.Users.FirstOrDefault(u => u.Email.ToLower() == normalizedEmail.ToLower());
         if (checkEmail != null)
         {
             ViewBag.Error = "Email นี้มีในระบบแล้ว";
@@ -1297,8 +1404,8 @@ public class AdminController : Controller
         var user = new User();
         user.FirstName = string.IsNullOrWhiteSpace(data.FirstName) ? "User" : data.FirstName;
         user.LastName = string.IsNullOrWhiteSpace(data.LastName) ? "" : data.LastName;
-        user.Email = data.Email;
-        user.PasswordHash = data.Password;
+        user.Email = normalizedEmail;
+        user.PasswordHash = UserPasswordService.Hash(user, data.Password);
         user.PhoneNumber = data.PhoneNumber;
         user.Status = string.IsNullOrWhiteSpace(data.Status) ? "active" : data.Status;
         user.CreatedAt = DateTime.Now;
@@ -1373,9 +1480,24 @@ public class AdminController : Controller
             return RedirectToAction("Userlist");
         }
 
+        var normalizedEmail = data.Email?.Trim();
+        if (string.IsNullOrWhiteSpace(normalizedEmail))
+        {
+            ViewBag.Error = "กรุณากรอก Email";
+            data.RoleOptions = GetCustomerRoleOptions();
+            return View("Useredit", data);
+        }
+
+        if (_db.Users.Any(u => u.UserId != user.UserId && u.Email.ToLower() == normalizedEmail.ToLower()))
+        {
+            ViewBag.Error = "Email นี้มีในระบบแล้ว";
+            data.RoleOptions = GetCustomerRoleOptions();
+            return View("Useredit", data);
+        }
+
         user.FirstName = string.IsNullOrWhiteSpace(data.FirstName) ? "User" : data.FirstName;
         user.LastName = string.IsNullOrWhiteSpace(data.LastName) ? "" : data.LastName;
-        user.Email = data.Email;
+        user.Email = normalizedEmail;
         user.PhoneNumber = data.PhoneNumber;
         user.Status = data.Status;
 
@@ -1593,7 +1715,7 @@ public class AdminController : Controller
             PaymentMethod = order.Payments.OrderByDescending(p => p.PaidAt).Select(p => p.PaymentMethod).FirstOrDefault() ?? "-",
             PaymentStatus = order.Payments.OrderByDescending(p => p.PaidAt).Select(p => p.PaymentStatus).FirstOrDefault() ?? "-",
             ShippingProvider = latestShipment?.ShippingProvider ?? "-",
-            ShippingStatus = latestShipment?.Status ?? "-",
+            ShippingStatus = order.Status == "cancelled" ? "cancelled" : latestShipment?.Status ?? "-",
             TrackingNumber = latestShipment?.TrackingNumber,
             ShippingAddress = BuildAddressText(latestShipment?.Address),
             CreatedAt = order.CreatedAt
@@ -1624,14 +1746,14 @@ public class AdminController : Controller
         var status = (shipment.Status ?? string.Empty).Trim().ToLowerInvariant();
         var now = DateTime.Now;
 
-        if (status is "pending" or "packed")
+        if (status == "pending")
         {
             shipment.ShippedAt = null;
             shipment.DeliveredAt = null;
             return;
         }
 
-        if (status == "shipped")
+        if (status is "shipped" or "in_transit")
         {
             shipment.ShippedAt ??= now;
             shipment.DeliveredAt = null;
@@ -1646,19 +1768,6 @@ public class AdminController : Controller
         }
 
         shipment.DeliveredAt = null;
-    }
-
-    // สร้างเลขติดตามจากผู้ให้บริการขนส่งและรหัสข้อมูลที่เกี่ยวข้อง
-    private static string BuildShipmentTrackingNumber(string shippingProvider, int orderId, int shipmentId)
-    {
-        var prefix = shippingProvider switch
-        {
-            "Flash Express" => "FLA",
-            "Kerry Express" => "KRY",
-            _ => "THP"
-        };
-
-        return $"{prefix}-{DateTime.Now:yyyyMMddHHmmss}-{orderId:D4}-{shipmentId:D4}";
     }
 
     // แปลงข้อมูลที่อยู่ให้เป็นข้อความสำหรับแสดงผลอย่างปลอดภัย
@@ -2175,11 +2284,18 @@ public class AdminController : Controller
     // ตรวจสอบและบันทึกไฟล์รูปภาพที่อัปโหลดไว้ใต้ wwwroot/uploads
     private bool TrySaveUploadedImage(IFormFile? imageFile, string folderName, string? filePrefix, out string? imageUrl, out string? errorMessage)
     {
+        const long maxImageBytes = 5 * 1024 * 1024;
         imageUrl = null;
         errorMessage = null;
 
-        if (imageFile == null || imageFile.Length == 0)
+        if (imageFile == null)
         {
+            return false;
+        }
+
+        if (imageFile.Length == 0)
+        {
+            errorMessage = "ไฟล์รูปภาพว่างเปล่า";
             return false;
         }
 
@@ -2190,6 +2306,30 @@ public class AdminController : Controller
         {
             errorMessage = "รองรับเฉพาะไฟล์รูป .jpg, .jpeg, .png, .gif และ .webp";
             return false;
+        }
+
+        if (imageFile.Length > maxImageBytes)
+        {
+            errorMessage = "รูปภาพต้องมีขนาดไม่เกิน 5 MB";
+            return false;
+        }
+
+        using (var source = imageFile.OpenReadStream())
+        {
+            Span<byte> header = stackalloc byte[12];
+            var bytesRead = 0;
+            while (bytesRead < header.Length)
+            {
+                var count = source.Read(header[bytesRead..]);
+                if (count == 0) break;
+                bytesRead += count;
+            }
+
+            if (!HasImageSignature(extension, header[..bytesRead]))
+            {
+                errorMessage = "ไฟล์ที่อัปโหลดไม่ใช่รูปภาพตามชนิดไฟล์ที่เลือก";
+                return false;
+            }
         }
 
         var webRootPath = string.IsNullOrWhiteSpace(_env.WebRootPath)
@@ -2207,6 +2347,18 @@ public class AdminController : Controller
 
         imageUrl = $"/uploads/{folderName}/{fileName}";
         return true;
+    }
+
+    private static bool HasImageSignature(string extension, ReadOnlySpan<byte> header)
+    {
+        return extension switch
+        {
+            ".jpg" or ".jpeg" => header.Length >= 3 && header[..3].SequenceEqual(new byte[] { 0xFF, 0xD8, 0xFF }),
+            ".png" => header.Length >= 8 && header[..8].SequenceEqual(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 }),
+            ".gif" => header.Length >= 6 && (header[..6].SequenceEqual("GIF87a"u8) || header[..6].SequenceEqual("GIF89a"u8)),
+            ".webp" => header.Length >= 12 && header[..4].SequenceEqual("RIFF"u8) && header[8..12].SequenceEqual("WEBP"u8),
+            _ => false
+        };
     }
 
     // ลบไฟล์รูปภาพที่เคยอัปโหลดออกจากดิสก์เมื่อไม่ต้องใช้งานแล้ว
@@ -2374,7 +2526,9 @@ public class AdminController : Controller
                 .Select(i => i.ImageUrl ?? "https://placehold.co/300x300?text=No+Image")
                 .ToList(),
             ShowInPromotion = product.Promotions.Any(),
-            TotalSold = product.OrderItems.Sum(i => i.Quantity)
+            TotalSold = product.OrderItems
+                .Where(item => item.Order.Status is "paid" or "packed" or "shipped" or "in_transit" or "delivered")
+                .Sum(item => item.Quantity)
         };
     }
 }

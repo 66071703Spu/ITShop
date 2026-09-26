@@ -59,6 +59,14 @@
                                     </td>
                                     <td>@order.CreatedAt?.ToString("dd/MM/yyyy HH:mm")</td>
                                     <td>
+                                        @if (order.PaymentStatus == "pending" && order.Status != "cancelled")
+                                        {
+                                            <form asp-action="ConfirmPayment" method="post" class="mb-1">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="orderId" value="@order.OrderId" />
+                                                <button type="submit" class="btn btn-sm btn-outline-success">Confirm Payment</button>
+                                            </form>
+                                        }
                                         @if (order.HasShipment)
                                         {
                                             <a asp-action="EditShipment" asp-route-orderId="@order.OrderId" class="btn btn-sm btn-outline-primary">Update Shipment</a>

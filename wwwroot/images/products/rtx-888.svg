@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="RTX 888 test product">
+  <defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="#14213d"/><stop offset="1" stop-color="#384b75"/></linearGradient></defs>
+  <rect width="800" height="600" fill="url(#g)"/>
+  <rect x="105" y="145" width="590" height="310" rx="28" fill="#222f4d" stroke="#88a5d5" stroke-width="8"/>
+  <circle cx="300" cy="300" r="96" fill="#101827" stroke="#6985b6" stroke-width="15"/>
+  <circle cx="500" cy="300" r="96" fill="#101827" stroke="#6985b6" stroke-width="15"/>
+  <text x="400" y="95" fill="white" font-family="Arial,sans-serif" font-size="58" font-weight="bold" text-anchor="middle">RTX 888</text>
+  <text x="400" y="535" fill="#c9d8f4" font-family="Arial,sans-serif" font-size="28" text-anchor="middle">TEST PRODUCT</text>
+</svg>

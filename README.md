@@ -1,4 +1,8 @@
-# ITShop ## ภาพรวมโปรเจกต์
+# ITShop
+
+เอกสารนี้อธิบายฟังก์ชัน โครงสร้าง และ flow การทำงานของเว็บ ITShop วิธีทดลองหน้าร้านอยู่ใน [README สำหรับ demo](README-DEMO.md)
+
+## ภาพรวมโปรเจกต์
 
 ITShop เป็นโปรเจกต์ ASP.NET Core MVC สำหรับร้านค้าอุปกรณ์ไอที โดยแยกโครงสร้างตามแนว MVC ชัดเจน
 
@@ -12,10 +16,6 @@ ITShop เป็นโปรเจกต์ ASP.NET Core MVC สำหรับ�
 
 - ฝั่งลูกค้า: Home, Product, Cart, Order, Account
 - ฝั่งหลังบ้าน: Admin, SuperAdmin
-
-หมายเหตุ:
-
-- เดิมเคยมี `CatagoryController` สำหรับ route เก่าของหมวดหมู่สินค้า แต่ตอนนี้ถูกลบออกแล้ว และระบบใช้ `ProductController` เป็นจุดหลักของหมวดหมู่สินค้าแทน
 
 ## โครงสร้างหลักของระบบ
 
@@ -82,6 +82,8 @@ ITShop เป็นโปรเจกต์ ASP.NET Core MVC สำหรับ�
 - `Helpers/PromotionPriceCalculator.cs`
 - `Views/Home/Index.cshtml`
 
+หน้าแรกแสดงโปรโมชันเฉพาะที่อยู่ในช่วงเวลาใช้งาน และซ่อนส่วนนี้เมื่อไม่มีรายการที่ใช้ได้ ยอด Best Seller นับจากออเดอร์ที่ชำระเงินหรือเข้าสู่ขั้นตอนจัดส่งแล้ว จึงไม่รวมออเดอร์ `pending` และ `cancelled` แบนเนอร์หลักคงสัดส่วนภาพเดิม ส่วนข้อความและปุ่มอยู่ใต้ภาพเพื่อให้แสดงได้บนจอเล็ก โลโก้ใน Popular Brands ใช้ไฟล์ของแต่ละแบรนด์จาก `wwwroot/images/brands/`; แหล่งภาพอยู่ใน `Data/brand-logo-sources.json`
+
 ### ProductController
 
 ไฟล์: `Controllers/ProductController.cs`
@@ -131,6 +133,10 @@ ITShop เป็นโปรเจกต์ ASP.NET Core MVC สำหรับ�
 - `Helpers/CouponPromotionHelper.cs`
 - `Views/Product/ProductDetail.cshtml`
 
+เมื่อเลือกหมวดจาก topbar หน้าแคตตาล็อกจะคงหมวดนั้นไว้ระหว่างใช้ตัวกรองและซ่อนช่องเลือก Category ที่ซ้ำกัน ปุ่ม Clear จะล้างตัวกรองอื่นโดยยังอยู่ในหมวดเดิม สินค้าที่เป็น `inactive` ไม่แสดงในหน้าร้าน
+
+รูปสินค้าตั้งต้นเก็บใน `wwwroot/images/products/` และบันทึกชื่อรุ่นกับแหล่งภาพใน `Data/catalog-image-sources.json` ภาพ ASUS TUF VG27AQ และ DeathAdder V3 ใช้ภาพจากผู้ผลิตที่ไม่มีกรอบชื่อร้าน ข้อมูลสินค้าที่ชื่อไม่ระบุรุ่นย่อยหรือ SKU ครบอาจใช้ภาพในตระกูลเดียวกัน จึงควรตรวจชื่อกับรูปก่อนนำไปแสดงเป็นสินค้าที่ขายจริง
+
 ### CartController
 
 ไฟล์: `Controllers/CartController.cs`
@@ -177,6 +183,12 @@ ITShop เป็นโปรเจกต์ ASP.NET Core MVC สำหรับ�
 - `Helpers/CouponPromotionHelper.cs`
 - `Helpers/InvitePromotionHelper.cs`
 
+ตะกร้ารีเฟรชราคาและสต็อกก่อน checkout และก่อนสร้างออเดอร์ ส่วนลดอัตโนมัติคำนวณจากสินค้าที่ร่วมรายการ ส่วนคูปองตรวจช่วงเวลา เจ้าของ สิทธิ์การใช้ซ้ำ จำนวนครั้ง ยอดขั้นต่ำ และสินค้าเป้าหมายก่อนหักส่วนลด คูปองที่ใช้จะบันทึกเป็น `CouponRedemption` เมื่อสร้างออเดอร์สำเร็จ
+
+สินค้า Comset ต้องมีชิ้นส่วนที่เปิดขายและสต็อกเพียงพอ การสร้างออเดอร์ตัดสต็อกทั้งตัวเซตและชิ้นส่วนใน transaction เดียว พร้อมบันทึก `InventoryTransaction` เลขคำสั่งซื้อประกอบด้วยเวลาและ `order_id` เพื่อไม่ให้ซ้ำกันเมื่อสร้างหลายรายการในวินาทีเดียวกัน ออเดอร์ใหม่และ payment เริ่มที่ `pending` โดยยังไม่บันทึกเวลาชำระเงิน
+
+ระบบรองรับ Cash on Delivery และ Bank Transfer แบบให้ผู้ดูแลตรวจสอบเอง ยังไม่มีการรับหลักฐานการโอนหรือ payment gateway
+
 ### OrderController
 
 ไฟล์: `Controllers/OrderController.cs`
@@ -203,6 +215,8 @@ ITShop เป็นโปรเจกต์ ASP.NET Core MVC สำหรับ�
 - `ViewModels/OrderViewModels.cs`
 - `Views/Order/MyOrders.cshtml`
 - `Views/Order/OrderDetail.cshtml`
+
+ลูกค้ายกเลิกได้ก่อนชำระเงินและก่อนเริ่มจัดส่งเท่านั้น เมื่อยกเลิก ระบบเปลี่ยนสถานะ payment เป็น `cancelled` และคืนสต็อกตามรายการที่ตัดไว้ หน้า Order Detail แสดงการจัดส่งเป็น `cancelled` ตามสถานะออเดอร์ แม้ค่า shipment ในฐานข้อมูลยังเป็น `pending` เพราะ enum ของ shipment ไม่มีสถานะ `cancelled`
 
 ### AccountController
 
@@ -233,11 +247,11 @@ ITShop เป็นโปรเจกต์ ASP.NET Core MVC สำหรับ�
 - `ChangePassword()` / `ChangePassword(ChangePasswordViewModel data)`
   เปลี่ยนรหัสผ่านสำหรับผู้ใช้ที่ login อยู่
 - `ForgotPassword()` / `ForgotPassword(ForgotPasswordViewModel data)`
-  reset password แบบง่ายโดยใช้ email
+  ส่งลิงก์ตั้งรหัสผ่านใหม่ไปยังอีเมลที่ลงทะเบียน
+- `ResetPassword()` / `ResetPassword(ResetPasswordViewModel data)`
+  ตรวจโทเค็นที่หมดอายุหรือถูกใช้ไปแล้วก่อนเปลี่ยนรหัสผ่าน
 - `Logout()`
   ล้าง session ทั้งหมด
-- `Delete(string email)`
-  ลบผู้ใช้จากฝั่ง admin ภายใต้เงื่อนไขว่าต้องไม่มี order history
 - `GetCurrentUser(...)`
   helper โหลด user ปัจจุบันจาก session
 - `PopulateInviteSignupContext(...)`
@@ -254,11 +268,13 @@ ITShop เป็นโปรเจกต์ ASP.NET Core MVC สำหรับ�
 - `Helpers/InvitePromotionHelper.cs`
 - `Helpers/CouponPromotionHelper.cs`
 
-จุดที่ควรสังเกต
+การทำงานของบัญชีผู้ใช้
 
-- ไฟล์ชื่อ `AccountCotroller.cs` สะกดชื่อไฟล์ผิด แต่ class ภายในยังเป็น `AccountController` และระบบยังทำงานได้ตามปกติ
 - controller นี้เป็นศูนย์กลางของ session ผู้ใช้ทั่วไป เช่น `UserId`, `UserEmail`, `UserRole`
 - profile page ไม่ได้แค่ดึงข้อมูล user อย่างเดียว แต่รวม order, coupon, address และ invite history เข้ามาในหน้าเดียวด้วย
+- รหัสผ่านจากการสมัคร เพิ่มบัญชี เปลี่ยนรหัส และรีเซ็ตเก็บด้วย `PasswordHasher<User>`; การสมัครตัดช่องว่างอีเมลและตรวจอีเมลซ้ำโดยไม่แยกตัวพิมพ์
+- รหัสผ่านเดิมในฐานข้อมูลแปลงเป็นแฮชได้ด้วย `dotnet run --no-restore -- --migrate-passwords` โดยผู้ใช้ยังล็อกอินด้วยรหัสเดิมได้
+- Forgot Password ส่งลิงก์รีเซ็ตอายุ 30 นาทีที่ใช้ได้ครั้งเดียว โดยเก็บโทเค็นเป็น SHA-256 ต้องตั้งค่า `PasswordReset__PublicBaseUrl` และ `PasswordReset__Smtp__Host`, `PasswordReset__Smtp__Port`, `PasswordReset__Smtp__EnableSsl`, `PasswordReset__Smtp__From`, `PasswordReset__Smtp__Username`, `PasswordReset__Smtp__Password` ผ่าน environment variables หรือ user secrets ตาม `appsettings.example.json` หากยังไม่ตั้งค่า หน้าลืมรหัสผ่านจะแจ้งให้ติดต่อผู้ดูแล
 
 ### AdminController
 
@@ -292,6 +308,8 @@ ITShop เป็นโปรเจกต์ ASP.NET Core MVC สำหรับ�
   จัดการโปรโมชั่นและ coupon ที่ผูกกับโปรโมชั่น
 - `OrderList()`
   แสดงคำสั่งซื้อทั้งหมดในหลังบ้าน
+- `ConfirmPayment(int orderId)`
+  ยืนยันการรับเงินของออเดอร์ที่ยังรอชำระ แล้วเปลี่ยน order และ payment เป็น `paid`
 - `EditShipment()` / `EditShipment(AdminShipmentUpdateViewModel data)`
   จัดการ shipment ของคำสั่งซื้อ
 - `Userlist()`, `CustomerProfile()`, `Adduser()`, `Edituser()`, `Deleteuser()`
@@ -319,11 +337,11 @@ helper ภายในที่สำคัญ
 - `Helpers/BackOfficeAccessHelper.cs`
 - `Helpers/BrandLogoHelper.cs`
 
-จุดที่ควรสังเกต
+กฎสำคัญของหลังบ้าน
 
-- ไฟล์ชื่อ `AdminCotroller.cs` สะกดชื่อไฟล์ผิด แต่ class ภายในยังเป็น `AdminController`
-- controller นี้เป็น controller ที่ใหญ่ที่สุดในระบบ เพราะรวมหลายโดเมนของหลังบ้านไว้ในที่เดียว
-- method กลุ่ม product, promotion และ shipment มี helper ภายในจำนวนมาก เพราะต้องแยก validation และ mapping ออกจาก action หลักไม่ให้ยาวเกินไป
+- รูปแบรนด์ สินค้า และแบนเนอร์ที่อัปโหลดรับไฟล์ไม่เกิน 5 MB และตรวจลายเซ็นไฟล์ให้ตรงกับ JPG, PNG, GIF หรือ WebP ฟอร์มแบนเนอร์ตรวจช่วงวันที่ก่อนอัปโหลด เมื่อเปลี่ยนหรือลบแบนเนอร์หรือโลโก้ ระบบลบไฟล์อัปโหลดที่เลิกใช้
+- ฟอร์ม shipment รับสถานะ `pending`, `shipped`, `in_transit`, `delivered` และปรับสถานะออเดอร์ให้สอดคล้องกัน โดยไม่อนุญาตให้ย้อนสถานะหลังเริ่มจัดส่ง เลขติดตามเริ่มว่างจนกว่าผู้ดูแลจะกรอกเลขจริง
+- ฟอร์มแก้ไขลูกค้าตรวจอีเมลว่างและซ้ำก่อนบันทึก การลบบัญชีลูกค้าทำผ่าน POST พร้อมสิทธิ์ `customers.manage` และ antiforgery token
 
 ### SuperAdminController
 
@@ -369,6 +387,8 @@ helper ภายในที่สำคัญ
 - `ViewModels/SuperAdminViewModels.cs`
 - `ViewModels/AdminViewModels.cs`
 - `Helpers/BackOfficeAccessHelper.cs`
+
+สิทธิ์เริ่มต้นจะเติมให้เฉพาะฐานข้อมูลที่ยังไม่มี role-permission เพื่อไม่ทับการตั้งค่าที่ SuperAdmin บันทึกไว้
 
 ## Helpers
 
@@ -464,7 +484,7 @@ helper ภายในที่สำคัญ
 
 ไฟล์: `Helpers/BrandLogoHelper.cs`
 
-หน้าที่คือจัดการข้อมูลตั้งต้นของแบรนด์และช่วยสร้าง slug จากชื่อแบรนด์
+หน้าที่คือจัดการข้อมูลตั้งต้นและโลโก้ของแบรนด์จาก `Data/brand-logo-sources.json` พร้อมช่วยสร้าง slug จากชื่อแบรนด์
 
 ฟังก์ชันสำคัญ
 
@@ -487,10 +507,15 @@ helper ภายในที่สำคัญ
 - `EnsurePromotionCouponSchema(...)`
 - `EnsureInvitePromotionSchema(...)`
 
-หมายเหตุสำคัญ
+เมื่อเริ่มแอป helper นี้เตรียม schema และข้อมูลตั้งต้นที่ controller อื่นต้องใช้ เช่น role, category, brand และ promotion
 
-- helper ตัวนี้มีบทบาทคล้าย bootstrap ของระบบ คือช่วยให้ฐานข้อมูลมี schema และข้อมูลตั้งต้นที่จำเป็นก่อนใช้งานจริง
-- ถ้าไม่มีส่วนนี้ บาง controller หรือ helper จะทำงานไม่ได้เพราะข้อมูล role, category, brand หรือ promotion ตั้งต้นอาจยังไม่ถูกสร้าง
+ข้อมูลตั้งต้นและไฟล์ภาพที่ใช้ร่วมกัน:
+
+- `wwwroot/images/products/` เก็บรูปสินค้า โดย `Data/catalog-image-sources.json` บันทึกชื่อสินค้า URL ต้นทางและไฟล์ปลายทาง ใช้ `scripts/Import-CatalogImages.ps1` เมื่อต้องนำเข้าภาพใหม่
+- `wwwroot/images/brands/` เก็บโลโก้แบรนด์ โดย `Data/brand-logo-sources.json` บันทึกแหล่งที่มา ใช้ `scripts/Import-BrandLogos.ps1` เมื่อต้องนำเข้าโลโก้ใหม่ ระบบเติมโลโก้ให้แบรนด์ที่ยังไม่มีรูปหรือใช้ placeholder โดยไม่ทับรูปที่ผู้ดูแลอัปโหลดเอง
+- Comset Starter Kit ใช้ภาพประกอบ `wwwroot/images/comset-starter-kit.png` เพื่อสื่อประเภทสินค้า ส่วนรุ่นชิ้นส่วนจริงอยู่ในหน้ารายละเอียดสินค้า
+- คำสั่ง `--repair-catalog-images`, `--repair-comset-image`, `--repair-comset-seed` และ `--repair-pending-tracking` ใช้ปรับข้อมูลเก่าที่เป็นรูปตัวอย่าง ชิ้นส่วนว่าง หรือเลขติดตามที่ระบบเดิมสร้างขึ้น โดยมีเงื่อนไขไม่ทับรูปหรือเลขที่ผู้ดูแลกำหนดเอง
+- ภาพสินค้าและโลโก้บางรายการมาจากเว็บไซต์ภายนอก ควรตรวจสิทธิ์การใช้ก่อนเผยแพร่เว็บไซต์สู่สาธารณะ
 
 ## Models
 
@@ -725,12 +750,9 @@ flow หลักคือ
 - `AdminController` เน้นดูแลธุรกิจประจำวัน เช่นสินค้า ออเดอร์ ลูกค้า โปรโมชั่น
 - `SuperAdminController` เน้นดูแล staff และสิทธิ์ระดับระบบ
 
-## สรุปสั้นสำหรับพรีเซนต์
+### 4. การใช้โปรโมชันและคูปอง
 
-ถ้าต้องอธิบายระบบนี้แบบสั้นที่สุด สามารถพูดได้ว่า
-
-1. `Controllers` คุม flow ของระบบ เช่น ซื้อสินค้า, จัดการสินค้า, จัดการสิทธิ์
-2. `Models` เก็บข้อมูลจริงของสินค้า ผู้ใช้ ออเดอร์ โปรโมชัน และสิทธิ์
-3. `ViewModels` ทำให้แต่ละหน้ารับข้อมูลที่พร้อมแสดง โดยไม่ต้องไปจัดรูปเองใน view
-4. `Helpers` รวมกฎธุรกิจ เช่น คำนวณโปรโมชัน คัดคูปอง และจัดการ invite
-5. ระบบหลังบ้านแยกสิทธิ์แบบ role-permission ทำให้จัดการ admin และ superadmin ได้ยืดหยุ่นกว่า hardcode role ตรง ๆ
+1. Admin สร้างโปรโมชัน กำหนดช่วงเวลา รูปแบบส่วนลด และสินค้าที่ร่วมรายการ; หากเป็นคูปองจะกำหนดรหัส จำนวนครั้งและยอดขั้นต่ำได้
+2. หน้า Home และ Product แสดงเฉพาะโปรโมชันที่อยู่ในช่วงเวลาใช้งาน `PromotionPriceCalculator` เลือกราคา auto apply ที่ดีที่สุดให้สินค้าแต่ละชิ้น
+3. ใน Cart และ Checkout ระบบตรวจสิทธิ์คูปองกับผู้ใช้ สินค้า ช่วงเวลา ยอดขั้นต่ำ และประวัติการใช้ แล้วแสดงส่วนลดอัตโนมัติกับส่วนลดคูปองแยกกัน
+4. ก่อนสร้างออเดอร์ `PlaceOrder()` ตรวจราคาและคูปองอีกครั้ง จากนั้นบันทึกยอดส่วนลดและ `CouponRedemption` ภายใน transaction เดียวกับออเดอร์

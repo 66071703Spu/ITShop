@@ -9,6 +9,11 @@
 
             <h3 class="text-center mb-4" style="color:#1e1e2f;">Edit Customer</h3>
 
+            @if (ViewBag.Error != null)
+            {
+                <div class="alert alert-danger">@ViewBag.Error</div>
+            }
+
             <form asp-action="Edituser" method="post">
                 @Html.AntiForgeryToken()
                 <input asp-for="UserId" type="hidden" />

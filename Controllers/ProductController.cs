@@ -69,7 +69,7 @@ public class ProductController : Controller
             .Include(p => p.ProductImages)
             .Include(p => p.Category)
             .Include(p => p.Promotions)
-            .Include(p => p.OrderItems)
+            .Include(p => p.OrderItems).ThenInclude(item => item.Order)
             .Where(p => p.Status == null || p.Status.ToLower() != "inactive")
             .AsQueryable();
 
@@ -116,13 +116,6 @@ public class ProductController : Controller
                 (p.Brand != null && p.Brand.BrandName.Contains(search)));
         }
 
-        if (inStockOnly ^ outOfStockOnly)
-        {
-            query = inStockOnly
-                ? query.Where(p => (p.Stock ?? 0) > 0)
-                : query.Where(p => (p.Stock ?? 0) <= 0);
-        }
-
         // ดึงข้อมูลออกจากฐานข้อมูลแล้วแปลงเป็น view model สำหรับหน้า catalog
         var products = query
             .OrderByDescending(p => p.CreatedAt)
@@ -138,6 +131,13 @@ public class ProductController : Controller
             {
                 ApplyPackageDetails(mappedProduct, sourceProduct);
             }
+        }
+
+        if (inStockOnly ^ outOfStockOnly)
+        {
+            products = products
+                .Where(product => inStockOnly ? (product.Stock ?? 0) > 0 : (product.Stock ?? 0) <= 0)
+                .ToList();
         }
 
         // กรองและเรียงลำดับข้อมูลรอบสุดท้ายก่อนส่งไปหน้า view
@@ -215,7 +215,7 @@ public class ProductController : Controller
             .Include(p => p.ProductImages)
             .Include(p => p.Category)
             .Include(p => p.Promotions)
-            .Include(p => p.OrderItems)
+            .Include(p => p.OrderItems).ThenInclude(item => item.Order)
             .Where(p => p.Status == null || p.Status.ToLower() != "inactive")
             .FirstOrDefault(p => p.ProductId == id);
 
@@ -227,7 +227,7 @@ public class ProductController : Controller
                 .Include(p => p.ProductImages)
                 .Include(p => p.Category)
                 .Include(p => p.Promotions)
-                .Include(p => p.OrderItems)
+                .Include(p => p.OrderItems).ThenInclude(item => item.Order)
                 .Where(p => p.Status == null || p.Status.ToLower() != "inactive")
                 .FirstOrDefault();
 
@@ -427,7 +427,7 @@ public class ProductController : Controller
             .Include(p => p.ProductImages)
             .Include(p => p.Category)
             .Include(p => p.Promotions)
-            .Include(p => p.OrderItems)
+            .Include(p => p.OrderItems).ThenInclude(item => item.Order)
             .Where(p => p.ProductId != currentProductId)
             .ToList()
             .Where(p => p.Status == null || !string.Equals(p.Status.Trim(), "inactive", StringComparison.OrdinalIgnoreCase))
@@ -456,7 +456,7 @@ public class ProductController : Controller
             .Include(p => p.ProductImages)
             .Include(p => p.Category)
             .Include(p => p.Promotions)
-            .Include(p => p.OrderItems)
+            .Include(p => p.OrderItems).ThenInclude(item => item.Order)
             .Where(p => p.ProductId != currentProductId)
             .Where(p => p.Status == null || p.Status.ToLower() != "inactive")
             .Where(p => (p.Stock ?? 0) > 0)
@@ -542,6 +542,9 @@ public class ProductController : Controller
 
         if (package == null)
         {
+            viewModel.IsPackageProduct = true;
+            viewModel.HasUnavailablePackageItems = true;
+            viewModel.Stock = 0;
             return;
         }
 
@@ -553,7 +556,8 @@ public class ProductController : Controller
             .Select(MapPackageComponent)
             .ToList();
         viewModel.PackageItemCount = viewModel.PackageComponents.Sum(item => item.Quantity);
-        viewModel.HasUnavailablePackageItems = viewModel.PackageComponents.Any(item => item.IsMissing || item.IsOutOfStock);
+        viewModel.Stock = PackageAvailabilityHelper.GetAvailableStock(product, package);
+        viewModel.HasUnavailablePackageItems = viewModel.Stock <= 0;
     }
 
     // แปลงข้อมูลชิ้นส่วนใน package ให้เป็นรูปแบบที่หน้าเว็บใช้แสดงผล
@@ -561,7 +565,7 @@ public class ProductController : Controller
     {
         var product = item.Product;
         var isMissing = product == null || string.Equals(product.Status, "inactive", StringComparison.OrdinalIgnoreCase);
-        var isOutOfStock = !isMissing && (product!.Stock ?? 0) <= 0;
+        var isOutOfStock = !isMissing && (product!.Stock ?? 0) < (item.Quantity ?? 1);
 
         return new PackageComponentViewModel
         {
@@ -653,7 +657,9 @@ public class ProductController : Controller
                 .Select(i => i.ImageUrl ?? "https://placehold.co/600x400?text=No+Image")
                 .ToList(),
             ShowInPromotion = PromotionPriceCalculator.HasAutoApplyPromotion(product),
-            TotalSold = product.OrderItems.Sum(i => i.Quantity),
+            TotalSold = product.OrderItems
+                .Where(item => item.Order.Status is "paid" or "packed" or "shipped" or "in_transit" or "delivered")
+                .Sum(item => item.Quantity),
             OriginalPrice = promotionPrice.OriginalPrice,
             DiscountAmount = promotionPrice.DiscountAmount,
             HasAutoAppliedPromotion = promotionPrice.HasDiscount,

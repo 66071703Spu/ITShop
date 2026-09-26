@@ -5,6 +5,7 @@ obj/
 ## Local configuration and secrets
 appsettings.json
 appsettings.*.local.json
+TEST-ACCOUNTS.local.md
 
 ## User-uploaded files
 wwwroot/uploads/
