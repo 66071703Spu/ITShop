@@ -21,6 +21,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Keep the developer's local database credentials out of deployment artifacts. -->
+    <Content Update="appsettings.json" CopyToPublishDirectory="Never" />
+    <!-- Uploaded files belong on persistent storage, not in a fresh app package. -->
+    <Content Update="wwwroot\uploads\**\*" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Remove="Models\*_*.cs" />
     <Compile Remove="artifacts\**\*.cs" />
     <Compile Remove=".tmp-*\**\*.cs" />

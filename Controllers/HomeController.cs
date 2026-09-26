@@ -37,7 +37,7 @@ public class HomeController : Controller
             ? products.Select(MapProduct).ToList()
             : GetSampleProducts();
 
-        const string defaultBannerImage = "/uploads/banners/bulk-banner.png";
+        const string defaultBannerImage = "/images/banners/demo-banner.png";
 
         // จัดข้อมูลที่เตรียมไว้ให้เป็นแต่ละ section ที่หน้า Home ต้องใช้
         var vm = new HomeViewModel

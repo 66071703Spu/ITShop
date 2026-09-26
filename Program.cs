@@ -22,6 +22,16 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<Csi402dbContext>();
     DatabaseSchemaInitializer.EnsureBrandSchema(db);
 
+    if (args.Contains("--rotate-test-admin-passwords", StringComparer.OrdinalIgnoreCase))
+    {
+        foreach (var message in TestAdminPasswordRotator.Rotate(db, builder.Configuration))
+        {
+            Console.WriteLine(message);
+        }
+
+        return;
+    }
+
     if (args.Contains("--seed-test-accounts", StringComparer.OrdinalIgnoreCase))
     {
         if (!app.Environment.IsDevelopment())

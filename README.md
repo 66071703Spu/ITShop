@@ -17,6 +17,15 @@ ITShop เป็นโปรเจกต์ ASP.NET Core MVC สำหรับ�
 - ฝั่งลูกค้า: Home, Product, Cart, Order, Account
 - ฝั่งหลังบ้าน: Admin, SuperAdmin
 
+## Deploy สำหรับทดลอง
+
+1. รัน `dotnet publish ITShop.csproj -c Release` แล้วนำไฟล์ใน `bin/Release/net10.0/publish/` ขึ้นเซิร์ฟเวอร์ที่มี .NET 10 runtime ชุด publish ไม่รวม `appsettings.json` ของเครื่องพัฒนา
+2. ตั้ง `ASPNETCORE_ENVIRONMENT=Production` และ `ConnectionStrings__DefaultConnection` บนเซิร์ฟเวอร์ ให้ชี้ไปยังฐานข้อมูล MySQL ที่เซิร์ฟเวอร์เข้าถึงได้จริง พร้อมตั้งค่า HTTPS ที่โฮสต์หรือ reverse proxy บัญชีฐานข้อมูลต้องมีสิทธิ์สร้างและปรับ schema ที่ระบบตรวจตอนเริ่มทำงาน
+3. ถ้าฐานข้อมูลปลายทางมีบัญชีทดสอบ Admin และ SuperAdmin ที่ยังใช้รหัสเก่า ให้เปลี่ยนรหัสก่อนเปิดเว็บ โดยตั้ง `TestAccounts__AdminPassword` และ `TestAccounts__SuperAdminPassword` เป็นรหัสใหม่คนละชุดที่ยาวอย่างน้อย 16 ตัวอักษร แล้วรัน `dotnet ITShop.dll --rotate-test-admin-passwords` จากโฟลเดอร์ publish คำสั่งเปลี่ยนเฉพาะบัญชีทดสอบที่มี role ตรงกัน และไม่แสดงรหัสใน log
+4. รูปสินค้า โลโก้ และแบนเนอร์ตัวอย่างที่ฐานข้อมูลชุดนี้ใช้อยู่ถูกรวมใน `wwwroot/images/` แล้ว ไฟล์ที่ Admin อัปโหลดใหม่ใน `wwwroot/uploads/` ไม่อยู่ใน Git หรือชุด publish ต้องเก็บโฟลเดอร์นี้ไว้บนพื้นที่ถาวร และย้ายไฟล์ตามไปหากฐานข้อมูลปลายทางอ้างถึงรูปที่อัปโหลด
+
+รหัสปัจจุบันของบัญชีทดสอบบนฐานข้อมูล `csi402db` ที่ `localhost` อยู่ใน `TEST-ACCOUNTS.local.md` ซึ่งเก็บเฉพาะในเครื่องและไม่ปรากฏบน GitHub
+
 ## โครงสร้างหลักของระบบ
 
 ### MVC ในโปรเจกต์นี้

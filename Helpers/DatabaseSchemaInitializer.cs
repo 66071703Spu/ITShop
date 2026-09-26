@@ -9,6 +9,24 @@ public static class DatabaseSchemaInitializer
 {
     private const string SampleComsetImageUrl = "/images/comset-starter-kit.png";
 
+    private static void ReplaceDemoBannerImage(Csi402dbContext db)
+    {
+        var banners = db.Banners
+            .Where(banner => banner.ImageUrl == "/uploads/banners/bulk-banner.png")
+            .ToList();
+        if (banners.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var banner in banners)
+        {
+            banner.ImageUrl = "/images/banners/demo-banner.png";
+        }
+
+        db.SaveChanges();
+    }
+
     public static int ReplaceBulkProductImages(Csi402dbContext db)
     {
         // The old sample name omitted "Plus", while Intel only lists this boxed 270K Plus model.
@@ -163,6 +181,7 @@ public static class DatabaseSchemaInitializer
             EnsureAuthorizationData(db);
             EnsurePromotionCouponSchema(connection);
             EnsureInvitePromotionSchema(connection);
+            ReplaceDemoBannerImage(db);
             BackfillProductBrands(connection);
             NormalizeProductSkus(connection);
         }
